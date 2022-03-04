@@ -29,7 +29,7 @@ Please delete options that are not relevant.
 
 ## Checklist:
 
-- [ ] I confirm that I wrote and/or have the right to submit the contents of my PR, by agreeing to the Developer Certificate of Origin (see https://github.com/svt/open-source-project-template/blob/master/docs/CONTRIBUTING.adoc[docs/CONTRIBUTING]).
+- [ ] I confirm that I wrote and/or have the right to submit the contents of my PR, by agreeing to the [Developer Certificate of Origin](https://developercertificate.org).
 - [ ] My code follows the style guidelines of this project
 - [ ] I have performed a self-review of my own code
 - [ ] I have commented my code in hard-to-understand areas
