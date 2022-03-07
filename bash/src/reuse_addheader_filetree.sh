@@ -37,9 +37,9 @@ printinput() {
 
 
   if  [ -z "$skipun" ]; then
-    echo "Settings: -c ${copyright} -l ${license} -y ${year} -e ${extensions} -p ${rootpath} -s" ;
+    echo "Settings: -c "${copyright}" -l ${license} -y ${year} -e ${extensions} -p ${rootpath} -s" ;
   else
-    echo "Settings: -c ${copyright} -l ${license} -y ${year} -e ${extensions} -p ${rootpath}";
+    echo "Settings: -c "${copyright}" -l ${license} -y ${year} -e ${extensions} -p ${rootpath}";
   fi
 }
 
@@ -99,7 +99,7 @@ addheader() {
       (( count++ )) || true
       #echo "Finding file no. $count"
       echo "$file"
-      eval "${reusetool} addheader --license ${license} --year ${year} --copyright ${copyright} --skip-unrecognised ${file}"
+      eval "${reusetool} addheader --license \""${license}\"" --year \"${year}\" --copyright \"${copyright}\" --skip-unrecognised ${file}"
     done
   done
 }
