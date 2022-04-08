@@ -9,11 +9,12 @@ A mixed collection of small helpers and scripts, mostly for use by myself, but m
 
 These have most likely only been tested in an Linux environment.
 
-For the Bash scripts, in some cases there will be a [Bats-core](https://github.com/bats-core/bats-core) test.
+For the Bash scripts, in some cases there will be a [Bats-core](https://github.com/bats-core/bats-core) test, found under bash/tests.
 
 ##
 
-- bash/src/reuse_addheader_filetree.sh - A wrapper for the addheader function of the [REUSE](https://github.com/fsfe/reuse-tool) project.
+- bash/src/reuse_addheader_filetree.bash - A wrapper for the addheader function of the [REUSE](https://github.com/fsfe/reuse-tool) project.
+- bash/src/dirsumgen.bash - A wrapper for the creating md5 and sha256 sums for directory trees. One of each for each dir.
 
 ## Getting involved
 
@@ -27,8 +28,4 @@ See [CONTRIBUTING](docs/CONTRIBUTING.adoc).
 Scripts in this project are licensed under the [MIT LICENSE](LICENSE).
 
 ----
-
-## Primary Maintainer
-
-[Josef Andersson](https://github.com/janderssonse)  
 
