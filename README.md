@@ -3,7 +3,7 @@
 
 # Janderscripts
 
-Intented to gather a mixed collection of small helpers and scripts, mostly for use by myself, but maybe someone else will find something of worth.
+Intended to gather a mixed collection of small helpers and scripts, mostly for use by myself, but maybe someone else will find something of worth.
 
 ## Description
 
