@@ -19,8 +19,6 @@ setup() {
 }
 
 #TO-DO
-#function generate
-#function verify
 #function input_handler
 #check defaults
 
@@ -35,6 +33,36 @@ function fails_without_command_installed_or_success_if_command_found { #@test
   assert_success
 }
 
+
+function generate_and_verify { #@test
+
+  source dirsumgen.bash
+
+  mkdir -p "${TEST_TEMP_DIR}/gensum/gen/empty"
+
+  local -r testFileArray=("${TEST_TEMP_DIR}/gensum/g1" "${TEST_TEMP_DIR}/gensum/gen/g2")
+
+  #create testfiles in temp dir
+  for path in "${testFileArray[@]}"; do
+    echo $((1 + "$RANDOM" % 10)) >"${path}"
+  done
+  
+
+  local -r WORKDIR="${TEST_TEMP_DIR}/gensum"
+  
+  run generate_sum "md5sum" "md5Sum.md5"
+  
+  assert_success
+  
+  echo -e "Processing ${WORKDIR} with md5sum\nProcessing ${WORKDIR}/gen with md5sum\nProcessing ${WORKDIR}/gen/empty with md5sum\nSkipped creating a sum for directory ${WORKDIR}/gen/empty as it contained no files!" | assert_output
+
+  run verify_sum "md5sum" "md5Sum.md5"
+
+  assert_success
+  echo -e "./g2: OK\n./g1: OK" | assert_output
+
+}
+
 function outputs_usage_without_args { #@test
 
   run dirsumgen.bash
@@ -44,40 +72,40 @@ function outputs_usage_without_args { #@test
 
 }
 
-function flag_p_fails_if_no_val_or_non_accesible_dir_and_is_always_intrepreted_first_ { #@test
+function flag_w_fails_if_non_accesible_dir_and_is_always_intrepreted_first { #@test
 
-  # fails if set to empty arg
-  run dirsumgen.bash -p
+  # workdir is default set (pwd) if no arg
+  run dirsumgen.bash -h -w
 
-  assert_output --partial "Please set -p to a valid option"
-  assert_failure
+  assert_output --partial "Setting workdir to ${PWD}"
+  assert_success 
 
   #fails if not accesible dir
-  run dirsumgen.bash -p "i_dont_exist"
+  run dirsumgen.bash -w "i_dont_exist"
 
   assert_output --partial "Directory i_dont_exist is not valid"
   assert_failure
 
   # success if accesible dir
-  run dirsumgen.bash -p "${BATS_TMPDIR}"
+  run dirsumgen.bash -w "${BATS_TMPDIR}"
 
   assert_output --partial "Setting workdir to ${BATS_TMPDIR}"
   assert_success
 
   # runs first wherever order it was set to as arg
-  run dirsumgen.bash -v -g -p "${TEST_TEMP_DIR}"
+  run dirsumgen.bash -v -g -w "${TEST_TEMP_DIR}"
 
-  echo -e "-v -g -p ${TEST_TEMP_DIR} \nSetting workdir to ${TEST_TEMP_DIR} \nVerifying sums starting from rootdir . \nGenerating sums starting from rootdir | "assert_output --partial
+  echo -e "-v -g -w ${TEST_TEMP_DIR} \nSetting workdir to ${TEST_TEMP_DIR} \nVerifying sums starting from rootdir . \nGenerating sums starting from rootdir" | assert_output --partial
   assert_success
 
-  run dirsumgen.bash -g -p "${TEST_TEMP_DIR}"
+  run dirsumgen.bash -g -w "${TEST_TEMP_DIR}"
 
-  echo -e "-g -p ${TEST_TEMP_DIR} \nSetting workdir to ${TEST_TEMP_DIR} \nGenerating sums starting from rootdir | "assert_output --partial
+  echo -e "-g -w ${TEST_TEMP_DIR} \nSetting workdir to ${TEST_TEMP_DIR} \nGenerating sums starting from rootdir | "assert_output --partial
   assert_success
 
-  run dirsumgen.bash -p "${TEST_TEMP_DIR}" -g
+  run dirsumgen.bash -w "${TEST_TEMP_DIR}" -g
 
-  echo -e "-g -p ${TEST_TEMP_DIR} \nSetting workdir to ${TEST_TEMP_DIR} \nGenerating sums starting from rootdir | "assert_output --partial
+  echo -e "-g -w ${TEST_TEMP_DIR} \nSetting workdir to ${TEST_TEMP_DIR} \nGenerating sums starting from rootdir" | assert_output --partial
   assert_success
 
 }
@@ -95,7 +123,7 @@ function integrationtest_generate_sums_and_then_validate_them() { #@test
     echo $((1 + "$RANDOM" % 10)) >"${path}"
   done
 
-  run dirsumgen.bash -g -p "${TEST_TEMP_DIR}"
+  run dirsumgen.bash -v -g -w "${TEST_TEMP_DIR}" -v
 
   # expected generated files found
   for path in "${testFileArray[@]}"; do
@@ -110,12 +138,12 @@ function integrationtest_generate_sums_and_then_validate_them() { #@test
   assert_equal 8 "${count_sumfiles}"
 
   #expected verified files
-  run dirsumgen.bash -v -p "${TEST_TEMP_DIR}"
+  run dirsumgen.bash -v -w "${TEST_TEMP_DIR}"
 
   local count_sumOKs
   count_sumOKs=$(echo "$output" | wc -l)
 
-  assert_equal 13 "${count_sumOKs}" #3 rows are added besides the OK ones, to fix
+  assert_equal 12 "${count_sumOKs}" #2 rows are added besides the OK ones, to fix
 
   assert_success
 }
