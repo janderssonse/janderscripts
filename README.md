@@ -3,7 +3,7 @@
 
 # Janderscripts
 
-Intended to gather a mixed collection of small helpers and scripts, mostly for use by myself, but maybe someone else will find something of worth.
+Intended to gather a mixed collection of small helpers and scripts, in different languages over time, for use by myself, but maybe someone else will find something of worth, who knows.
 
 ## Description
 
@@ -12,24 +12,29 @@ Intended to gather a mixed collection of small helpers and scripts, mostly for u
 
 ## Dependencies
 
-These have most likely only been tested in an Linux environment.
-
-For Bash scripts, Tests are written with [Bats-core](https://github.com/bats-core/bats-core) test.
+For Bash scripts, Tests are written with [Bats-core](https://github.com/bats-core/bats-core).
 
 ## Running the bash tests
 
-First install bats-core
+First install bats-core with support libs.
 
 To Install the Bats-core dependencies where the bats scripts can find them (<projectdir>/bash/lib):
 
 ```console
-$ bash/install_bats.bash
+$ ./bash/install_bats.bash
 ```
+
+And to run the tests:
 
 ```console
 $ bash/lib/bats-core/bin/bats bash/tests
 ```
 
+To run a script:
+
+```console
+$ bash/src/<script>.bash
+```
 
 ## Getting involved
 
@@ -43,4 +48,11 @@ See [CONTRIBUTING](docs/CONTRIBUTING.adoc).
 Scripts in this project are licensed under the [MIT LICENSE](LICENSE).
 
 ----
+
+## Credits:
+
+Base Bash template used are based on the small:
+
+Bash Template Gist 2020 [Maciej Radzikowski](https://gist.github.com/m-radzikowski/53e0b39e9a59a1518990e76c2bff8038)
+
 
