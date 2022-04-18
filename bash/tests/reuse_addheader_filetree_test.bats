@@ -17,19 +17,11 @@ setup() {
   TEST_TEMP_DIR="$(temp_make --prefix 'reuse-addheader-')"
 }
 
-function witout_any_options_fails_with_usage_hint { #@test
+function without_any_options_fails_with_usage_hint { #@test
   run reuse_addheader_filetree.bash
 
-  assert_output --partial "Settings: -c  -l  -y  -e * -p . -s"
-  assert_output --partial "-c COPYRIGHT -l LICENSE -y YEAR -e EXTENSIONS [-p ROOTPATH] [-s SKIPUNREGOGNIZED ]"
-  assert_failure
-}
-
-function without_reuse_fails_with_usage_hint { #@test
-  run reuse_addheader_filetree.bash -i "REUSE_NOT_FOUND"
-  assert_output --partial "REUSE_NOT_FOUND could not be found, make sure it is installed!"
-  assert_output --partial "See https://github.com/fsfe/reuse-tool for install options."
-  assert_failure
+  assert_output --partial "Usage: reuse_addheader_filetree [-h][-d][-c copyright][-l license][-year][-e extensions][-p rootpath][-s skipunrecognized" \
+    assert_failure
 }
 
 function integrationtest_adds_file_headers_verify_options_was_written_to_header { #@test

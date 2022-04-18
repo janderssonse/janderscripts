@@ -27,7 +27,7 @@ Please delete options that are not relevant.
 * Toolchain:
 * SDK:
 
-## Checklist:
+## Checklist
 
 - [ ] I confirm that I wrote and/or have the right to submit the contents of my PR, by agreeing to the [Developer Certificate of Origin](https://developercertificate.org).
 - [ ] My code follows the style guidelines of this project
