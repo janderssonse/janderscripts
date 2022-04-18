@@ -1,6 +1,4 @@
 ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/janderssonse/janderscripts)
-[![REUSE status](https://api.reuse.software/badge/github.com/janderssonse/janderscripts)](https://api.reuse.software/info/github.com/janderssonse/janderscripts)
-
 # Janderscripts
 
 Intended to gather a mixed collection of small helpers and scripts, in different languages over time, for use by myself, but maybe someone else will find something of worth, who knows.
@@ -21,19 +19,19 @@ First install bats-core with support libs.
 To Install the Bats-core dependencies where the bats scripts can find them (<projectdir>/bash/lib):
 
 ```console
-$ ./bash/install_bats.bash
+./bash/install_bats.bash
 ```
 
 And to run the tests:
 
 ```console
-$ bash/lib/bats-core/bin/bats bash/tests
+bash/lib/bats-core/bin/bats bash/tests
 ```
 
 To run a script:
 
 ```console
-$ bash/src/<script>.bash
+bash/src/<script>.bash
 ```
 
 ## Getting involved
@@ -49,7 +47,7 @@ Scripts in this project are licensed under the [MIT LICENSE](LICENSE).
 
 ----
 
-## Credits:
+## Credits
 
 Base Bash template used are based on the small:
 

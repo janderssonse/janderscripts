@@ -1,3 +1,6 @@
+report/
+bash/lib/
+
 # Compiled source #
 ###################
 *.com

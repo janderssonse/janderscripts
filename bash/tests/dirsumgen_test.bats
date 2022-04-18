@@ -33,7 +33,6 @@ function fails_without_command_installed_or_success_if_command_found { #@test
   assert_success
 }
 
-
 function generate_and_verify { #@test
 
   source dirsumgen.bash
@@ -46,14 +45,13 @@ function generate_and_verify { #@test
   for path in "${testFileArray[@]}"; do
     echo $((1 + "$RANDOM" % 10)) >"${path}"
   done
-  
 
   local -r WORKDIR="${TEST_TEMP_DIR}/gensum"
-  
+
   run generate_sum "md5sum" "md5Sum.md5"
-  
+
   assert_success
-  
+
   echo -e "Processing ${WORKDIR} with md5sum\nProcessing ${WORKDIR}/gen with md5sum\nProcessing ${WORKDIR}/gen/empty with md5sum\nSkipped creating a sum for directory ${WORKDIR}/gen/empty as it contained no files!" | assert_output
 
   run verify_sum "md5sum" "md5Sum.md5"
@@ -78,7 +76,7 @@ function flag_w_fails_if_non_accesible_dir_and_is_always_intrepreted_first { #@t
   run dirsumgen.bash -h -w
 
   assert_output --partial "Setting workdir to ${PWD}"
-  assert_success 
+  assert_success
 
   #fails if not accesible dir
   run dirsumgen.bash -w "i_dont_exist"
