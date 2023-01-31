@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
 
 # SPDX-FileCopyrightText: 2022 Josef Andersson
-# SPDX-FileCopyrightText: 2020 Maciej Radzikowski
 #
 # SPDX-License-Identifier: MIT
 
 # A no-thrills bash script to generate a md5 and sha256 for every directory in a structure.
 # in the future , make it more extensible with a few options and better fail-saftey
 # It will overwrite any existing checksums
-
-#Bash Template based on https://gist.github.com/m-radzikowski/53e0b39e9a59a1518990e76c2bff8038
 
 # abort on nonzero exitstatus
 set -o errexit
@@ -18,9 +15,16 @@ set -o pipefail
 # Allow error traps on function calls, subshell environment, and command substitutions
 set -o errtrace
 
-#trap cleanup SIGINT SIGTERM ERR EXIT
+err() {
+  printf "\n"
+  printf "%s\n" "$* ----- [$(date +'%Y-%m-%dT%H:%M:%S%z')]" >&2
+  exit 1
+}
 
-#SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+info() {
+  printf "\n"
+  printf "%s\n" "$@"
+}
 
 usage() {
 
@@ -39,31 +43,6 @@ usage() {
   exit
 }
 
-cleanup() {
-  trap - SIGINT SIGTERM ERR EXIT
-  # script cleanup here
-}
-
-setup_colors() {
-  if [[ -t 2 ]] && [[ -z "${NO_COLOR-}" ]] && [[ "${TERM-}" != "dumb" ]]; then
-    NOFORMAT='\033[0m' RED='\033[0;31m' GREEN='\033[0;32m' ORANGE='\033[0;33m' BLUE='\033[0;34m' PURPLE='\033[0;35m' CYAN='\033[0;36m' YELLOW='\033[1;33m'
-  else
-    NOFORMAT='' RED='' GREEN='' ORANGE='' BLUE='' PURPLE='' CYAN='' YELLOW=''
-  fi
-}
-
-msg() {
-  echo >&2 -e "${1-}"
-}
-
-die() {
-  local msg=$1
-  local code=${2-1} # default exit status 1
-  msg "$msg"
-  exit "$code"
-}
-
-# script logic here
 is_command_installed() {
 
   local -r sumprog=$1
@@ -86,13 +65,14 @@ generate_sum() {
       cd "${dir}" || return 2
 
       echo "Processing ${dir} with ${sumprog}"
-      local results=$(find . -maxdepth 1 -type f -not -name '*.md5' -not -name '*.sha256' -not -name 'dirsumgen.bash' -not -name 'dirsumgen' -exec "${sumprog}" {} \;)
+      local results
+      results=$(find . -maxdepth 1 -type f -not -name '*.md5' -not -name '*.sha256' -not -name 'dirsumgen.bash' -not -name 'dirsumgen' -exec "${sumprog}" {} \;)
 
       if [[ -n "${results}" ]]; then
         echo "${results}" >"${outputfile}"
         chmod a=rw "${outputfile}"
       else
-        echo "Skipped creating a sum for directory "${dir}" as it contained no files!"
+        echo "Skipped creating a sum for directory ${dir} as it contained no files!"
       fi
     )
 
@@ -130,7 +110,7 @@ parse_params() {
       workdir="${args[$var + 1]:-${PWD}}"
       echo "Setting workdir to ${workdir}"
       WORKDIR="${workdir}"
-      [[ ! -d "${WORKDIR}" ]] && die "Directory "${WORKDIR}" is not valid. Check -w option or \$PWD"
+      [[ ! -d "${WORKDIR}" ]] && err "Directory ${WORKDIR} is not valid. Check -w option or \$PWD"
       ;;
     esac
   done
@@ -139,7 +119,6 @@ parse_params() {
     case "${1-}" in
     -h | --help) usage ;;
     -d | --debug) set -x ;;
-    --no-color) NO_COLOR=1 ;;
     -w | --workdir) shift ;;
     -v | --verify)
       echo "Verifying sums starting from rootdir ${WORKDIR}"
@@ -166,7 +145,6 @@ main() {
   is_command_installed "sha256sum"
 
   parse_params "$@"
-  setup_colors
 }
 
 # Only runs main if not sourced.
@@ -174,8 +152,7 @@ main() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   # abort on unbound variable
   set -o nounset
-  main "$@"
-  if [ $? -gt 0 ]; then
+  if ! main "$@"; then
     exit 1
   fi
 fi

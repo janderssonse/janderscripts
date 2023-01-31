@@ -1,0 +1,15 @@
+name: Bats test
+
+on: [workflow_call] # yamllint disable-line rule:truthy
+
+jobs:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 7
+
+    - name: Download bats and run tests
+      run: |
+        bash/install_bats.bash
+        bash/lib/bats/bin/bats bash/src/test

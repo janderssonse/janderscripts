@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-
 # SPDX-FileCopyrightText: 2022 Josef Andersson
 #
 # SPDX-License-Identifier: MIT
 
-#install bats libs in current folder /lib
-#Bash Template based on https://gist.github.com/m-radzikowski/53e0b39e9a59a1518990e76c2bff8038
+#install bats libs in scripts current folder/lib
 
 # abort on nonzero exitstatus
 set -o errexit
@@ -26,19 +24,16 @@ is_command_installed() {
   fi
 }
 
-download_and_extract_bats() {
-
-  local -r name="${1}"
-  local -r version="${2}"
-  local -r url="${3}"
+download_bats() {
 
   local -r outputdir="${SCRIPT_DIR}/lib"
   mkdir -p "${outputdir}"
   (
     cd "${outputdir}"
-    curl -L -O -J "${url}"
-    tar -zxvf "${name}-${version}.tar.gz"
-    mv "${name}-${version}" "${name}"
+    git clone --depth 1 https://github.com/bats-core/bats-core.git bats
+    git clone --depth 1 https://github.com/bats-core/bats-support.git bats-support
+    git clone --depth 1 https://github.com/bats-core/bats-assert.git bats-assert
+    git clone --depth 1 https://github.com/bats-core/bats-file.git bats-file
   )
 
 }
@@ -46,11 +41,8 @@ download_and_extract_bats() {
 main() {
 
   is_command_installed "curl"
-
-  download_and_extract_bats 'bats-core' '1.6.0' 'https://github.com/bats-core/bats-core/archive/refs/tags/v1.6.0.tar.gz'
-  download_and_extract_bats 'bats-support' '0.3.0' 'https://github.com/bats-core/bats-support/archive/v0.3.0.tar.gz'
-  download_and_extract_bats 'bats-assert' '2.0.0' 'https://github.com/bats-core/bats-assert/archive/v2.0.0.tar.gz'
-  download_and_extract_bats 'bats-file' '0.3.0' 'https://github.com/bats-core/bats-file/archive/refs/tags/v0.3.0.tar.gz'
+  is_command_installed "git"
+  download_bats
 
 }
 
