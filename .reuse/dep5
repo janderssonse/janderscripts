@@ -1,23 +1,11 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 
-Files: .gitignore
+Files: .gitignore .gitattributes .github/workflows/*.yml docs/img/*.png .editorconfig **/*.mustache configs/mega-linter.yml *.md *.adoc CONTRIBUTING.adoc bash/src/test/resources/**/*
 Copyright: 2022 Josef Andersson
 License: CC0-1.0
 
-Files: .gitattributes
-Copyright: 2022 Josef Andersson
-License: CC0-1.0
+Files: */gradlew 
+Copyright: 2015 the original authors. 
+License: Apache-2.0
 
-Files: *.md
-Copyright: 2022 Josef Andersson
-License: CC0-1.0
-
-Files: *.adoc
-Copyright: 2022 Josef Andersson
-License: CC0-1.0
-
-Files: docs/CONTRIBUTING.adoc
-Copyright: 2020 HERE Europe B.V. <opensource@here.com>
-           2020 CFPB Consumer Finanical Protection Bureau. <tech@cfpb.gov>
-License: CC0-1.0 and Apache-2.0
 

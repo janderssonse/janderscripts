@@ -1,0 +1,22 @@
+name: Bats test
+
+on: [workflow_call] # yamllint disable-line rule:truthy
+
+jobs:
+  run-bats-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 7
+
+      - name: Download bats and run tests
+        run: |
+          git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.11.1
+          . "$HOME/.asdf/asdf.sh"
+          asdf plugin add semver
+          asdf install semver latest
+          asdf global semver latest
+          npm install -g git-changelog-command-line
+          bash/install_bats.bash
+          bash/lib/bats/bin/bats bash/src/test

@@ -43,7 +43,8 @@ function integrationtest_adds_file_headers_verify_options_was_written_to_header 
   assert_output --partial "Successfully changed header of ${TEST_TEMP_DIR}/a/jsfile.js"
 
   #assert reuse headers exists in output
-  local file_content=$(cat "${TEST_TEMP_DIR}/a/b/jsxfile.jsx")
+  local file_content=
+  file_content=$(cat "${TEST_TEMP_DIR}/a/b/jsxfile.jsx")
   local header="PDX-FileCopyrightText: ${year} ${copyright}"
   local header2="PDX-License-Identifier: license"
 
