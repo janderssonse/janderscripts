@@ -80,3 +80,7 @@ dist/
 
 # Bash
 bash/lib/
+
+#.vscode
+megalinter-reports
+**/*/.gradle

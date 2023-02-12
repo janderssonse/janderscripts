@@ -3,16 +3,9 @@
 # SPDX-License-Identifier: MIT
 
 setup() {
-  TEST_LIB_PREFIX="${PWD}/bash/lib/"
-  load "${TEST_LIB_PREFIX}bats-support/load.bash"
-  load "${TEST_LIB_PREFIX}bats-assert/load.bash"
-  load "${TEST_LIB_PREFIX}bats-file/load.bash"
-  # get the containing directory of this file
-  # use $BATS_TEST_FILENAME instead of ${BASH_SOURCE[0]} or $0,
-  # as those will point to the bats executable's location or the preprocessed file respectively
-  DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" >/dev/null 2>&1 && pwd)"
-  # make executables in src/ visible to PATH
-  PATH="$DIR/../src:$PATH"
+
+  load './testutils'
+  _init_bats
 
   TEST_TEMP_DIR="$(temp_make --prefix 'dirsumgen-')"
 

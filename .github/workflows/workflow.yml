@@ -1,0 +1,23 @@
+---
+name: janderscripts workflow
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  dco:
+    uses: ./.github/workflows/dco.yml
+  license:
+    uses: ./.github/workflows/license.yml
+  lint:
+    uses: ./.github/workflows/lint.yml
+  test:
+    needs: [dco, license, lint]
+    uses: ./.github/workflows/test.yml
