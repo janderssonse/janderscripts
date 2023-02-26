@@ -15,7 +15,7 @@ The script principles are:
 
 ### Bash
 
-- bash/src/changelog_release.bash - A util script to making an atomic release commit including an tag, changelog, updated project file. mvn, npm or gradle. Relies on Conventional Commits-standard.
+- bash/src/changelog_release.bash - A util script to making an atomic release commit including an tag, changelog, updated project file. mvn, npm or gradle. Relies on Conventional Commits-standard. 
 - bash/src/dirsumgen.bash - A wrapper for the creating md5 and sha256 sums for directory trees. One of each for each dir.
 
 ## Dependencies
@@ -34,7 +34,10 @@ The script principles are:
 
 ### changelog_release usage
 
-To make a release commit might need a few tedious stepsl - adding a changelog, tagging, update project verison. With conventional commits, signing and signoffs. It is easy to forget and miss something. So why not make it easier, a one step process:
+> **Warning**
+> Don't play with this just yet, I still have fix an important issue with paths, and add and publish image for convinience usage.
+
+To make a nice release commit might need a few boring steps - adding a changelog, tagging, update project verison. Add Conventional commits, signing and signoffs. It is easy to forget and miss something. So why not make it easier, a one step process:
 
 This script:
 

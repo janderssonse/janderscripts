@@ -22,10 +22,10 @@ set -o pipefail
 set -o errtrace
 
 INPUT_GIT_BRANCH_NAME="none"
-INPUT_GIT_HOST_NAME="gitlab.com"
 INPUT_IS_INTERACTIVE=""
 INPUT_PROJECT_TYPE=""
 INPUT_SEMVER_SCOPE="minor"
+INPUT_REPOURL=''
 INPUT_TAG=""
 
 # ---
@@ -39,24 +39,39 @@ readonly NC=$'\e[0m'
 readonly GREEN=$'\e[32m'
 readonly YELLOW=$'\e[0;33m'
 
+#Terminal chars
+readonly CHECKMARK=$'\xE2\x9C\x94'
+readonly MISSING=$'\xE2\x9D\x8C'
+
 check_interactive() {
 
   if [[ "${INPUT_IS_INTERACTIVE}" == 'y' ]]; then
-    SKIP_ACTION=''
     local user_info=$1
-    read -r -n 1 -p "${user_info}" SKIP_ACTION
+
+    while true; do
+      read -r -n 1 -p "${user_info}" SKIP_ACTION
+      case "${SKIP_ACTION}" in
+      [y]*)
+        break
+        ;;
+      [n]*)
+        break
+        ;;
+      *) echo "Please answer y or n." ;;
+      esac
+    done
+
     #TODO verify char is y or n
   fi
 }
 
 err() {
   printf "\n"
-  printf "%s\n" "$* ----- [$(date +'%Y-%m-%dT%H:%M:%S%z')]" >&2
+  printf "%s\n" "${MISSING} ${RED} $* ${NC} ----- [$(date +'%Y-%m-%dT%H:%M:%S%z')]" >&2
   exit 1
 }
 
 info() {
-  printf "\n"
   printf "%s\n" "$@"
 }
 
@@ -80,8 +95,8 @@ validate_input() {
   # Warn for potential git branch mismatch
   if [[ "${INPUT_GIT_BRANCH_NAME}" != "none" && "${INPUT_GIT_BRANCH_NAME}" != "${current_branch}" ]]; then
 
-    err "${RED} You are running the script from branch: ${current_branch} and would like to push to: ${INPUT_GIT_BRANCH_NAME}.${NC}" \
-      "${GREEN} To help avoid misfortunes with pushes, run the script from same branch you will push to. Use with${NC} -b /--git-branch-name option."
+    info "${GREEN} To help avoid misfortunes with pushes, run the script from same branch you will push to. Use with${NC} -b /--git-branch-name option."
+    err "You are running the script from branch: ${current_branch} and would like to push to: ${INPUT_GIT_BRANCH_NAME}"
   fi
 
   #Validate given tag
@@ -94,23 +109,27 @@ validate_input() {
 usage() {
 
   info \
-    "${GREEN}Usage:${NC} changelog_release [-h][-d][-i][-s semver-scope][-p project-type][-b git-branch-name]" \
+    "${YELLOW}Usage:${NC} changelog_release [-h][-d][-i][-s semver-scope][-p project-type][-b git-branch-name]" \
     "" \
-    "changelog_release is a glue for the process of bumping git tag, generate a changelog, update project file version" \
-    " and generating a release commit." \
-    "Using conventional commits." \
-    "Run it from the root of your git project structure." \
+    "changelog_release is a glue for the flow of" \
+    " bumping a git tag " \
+    " generating a changelog " \
+    " update project file version" \
+    " generating a release commit (CHANGELOG and project file)" \
+    " " \
+    "Run it from the root of your git project structure, see README for more info." \
     "" \
-    "Available options:" \
+    "${YELLOW}Available options:${NC}" \
     "" \
     " -h --help            Print this help and exit" \
     " -d --debug           Output extra script run information" \
     " -s --semver-scope    Semver scope for next tag when autoidentify <major|minor|patch>. Default: minor" \
     " -t --next-tag        Specify next tag instead of autoidentify" \
-    " -p --project-type    Which project type <npm|mvn|gradle>. Default: try autoidentify by existing file." \
+    " -p --project-type    Which project type <npm|mvn|gradle|none>. Default: try autoidentify by existing file." \
     " -b --git-branch-name Git branch name to push to (any_name). 'none' skips push. Default: none. " \
-    " --git-host-name   Git host for Changelog diff links. Default: 'gitlab.com'. " \
-    " -i --interactive     The script asks for tag naming input instead of calculating next, etc."
+    " -r --repository-url  Full repository url. Default: autoidentify from git remote url." \
+    " -i --interactive     The script asks for tag naming input instead of calculating next, etc." \
+    " "
   exit 0
 }
 
@@ -120,10 +139,8 @@ is_command_installed() {
   local link=$2
 
   if ! [[ -x "$(command -v "${prog}")" ]]; then
-    info "Tool ${RED}${prog} could not be found${NC}, make sure it is installed!" \
-      "**Highly** recommended to use the asdf-vm version if there is a plugin for the tool." \
-      "**Highly** recommended that you speed up the changelog generation by pre-installing global 'git-changelog-command-line'." \
-      "Otherwise npx will build deps etc for every script run, minutes instead of seconds.)"
+    info "Tool ${YELLOW}${prog}${NC} could not be found, make sure it is installed!" \
+      "**Highly** recommended to use the asdf-vm version if there is a plugin for the tool."
     info "See ${GREEN}${link}${NC} or your package manager for install options."
     exit 1
   fi
@@ -145,12 +162,12 @@ calculate_next_version() {
     #err "Could not find any existing tags in project. You might want to run with -t/--next-tag. Or just git tag -s x.y.z"
   fi
 
-  info "Auto calculating next tag with semver scope: ${INPUT_SEMVER_SCOPE}."
+  info "... Calculating next tag from semver scope: ${YELLOW}${INPUT_SEMVER_SCOPE}${NC}"
   validate_semver "${latest_tag}"
   NEXT_TAG=$(semver bump "${INPUT_SEMVER_SCOPE}" "${latest_tag}")
   readonly NEXT_TAG
 
-  info "Will use tag version ${NEXT_TAG}"
+  info "$GREEN $CHECKMARK ${NC} Calculated tag version: ${YELLOW}${NEXT_TAG}${NC}"
 }
 
 tag_with_next_version() {
@@ -160,10 +177,10 @@ tag_with_next_version() {
   if [[ "${SKIP_ACTION}" == 'n' ]]; then
 
     git tag -s "${NEXT_TAG}" -m "v${NEXT_TAG}"
-    info "Git tagged (signed): ${NEXT_TAG}"
+    info "${GREEN} ${CHECKMARK} ${NC} Tagged (signed): ${YELLOW}${NEXT_TAG}${NC}"
 
   else
-    info "Skipped Git tagging!"
+    info "${YELLOW} Skipped Git tagging!${NC}"
   fi
 }
 
@@ -172,36 +189,51 @@ generate_changelog() {
 
   if [[ "${SKIP_ACTION}" == 'n' ]]; then
 
-    local oldest_tag
+    # git-chlglog needs a repourl to generate links
+    local repourl
+
+    if [[ -n "${INPUT_REPOURL}" ]]; then
+      repourl="${INPUT_REPOURL}"
+    else
+      repourl=$(git config --get remote.origin.url)
+      repourl="${repourl::-4}" #remove.git
+      repourl=$(echo "${repourl}" | sed "s/git@gitlab.com:/https:\/\/gitlab.com\//")
+      repourl=$(echo "${repourl}" | sed "s/git@github.com:/https:\/\/github.com\//")
+
+    fi
+
     local scriptdir
     scriptdir=$(dirname -- "$0")
-    oldest_tag=$(git tag | tr -d v | sort -V | head -1)
 
-    local gitlog_extras="{\"oldest_tag\": \"${oldest_tag}\",\"host\": \"${INPUT_GIT_HOST_NAME}\"}"
-    local gitlog_template="${scriptdir}/changelog_release.mustache"
+    local git_chglog_conf="${scriptdir}/git-chglog-gl.yml"
 
-    info "Generate changelog ........"
-    npx git-changelog-command-line -ex "${gitlog_extras}" -t "${gitlog_template}" -of CHANGELOG.md
-    info "Generated changelog as ./CHANGELOG.md"
+    # Different styles for gitlab/github
+    if [[ "${repourl}" == *'github'* ]]; then
+      git_chglog_conf="${scriptdir}/git-chglog-gh.yml"
+    fi
+
+    #info "Generate changelog ........ ${repourl}"
+    git-chglog --repository-url "${repourl}" -c "${git_chglog_conf}" -o CHANGELOG.md
+    info "${GREEN} ${CHECKMARK} ${NC} Generated changelog as ${YELLOW}./CHANGELOG.md${NC}"
   else
-    info "Changelog generation skipped!"
+    info "${YELLOW} Skipped Changelog generation!${NC}"
   fi
 }
 
 update_npm_version() {
   npm --no-git-tag-version --allow-same-version version "${NEXT_TAG}"
-  info "Updated package.json version to ${NEXT_TAG}"
+  info "${GREEN} ${CHECKMARK} ${NC} Updated package.json version to ${YELLOW}${NEXT_TAG}${NC}"
 }
 
 update_pom_version() {
   mvn -q versions:set -DnewVersion="${NEXT_TAG}"
-  info "Updated pom.xml version to ${NEXT_TAG}"
+  info "${GREEN} ${CHECKMARK} ${NC} Updated pom.xml version to ${YELLOW}${NEXT_TAG}${NC}"
 }
 
 update_gradle_version() {
   #./gradlew properties -q | grep "version:" | awk '{print $2}'
   sed -i -E 's/version=.+/version='"${NEXT_TAG}"'/g' gradle.properties
-  info "Updated gradle.properties version to ${NEXT_TAG}"
+  info "${GREEN} ${CHECKMARK} ${NC} Updated gradle.properties version to ${YELLOW}${NEXT_TAG}${NC}"
 }
 
 update_projectfile_version() {
@@ -215,12 +247,10 @@ update_projectfile_version() {
     local npmfile="${project_file_path}package.json"
     local gradlefile="${project_file_path}gradle.properties"
 
+    #TODO: check if more than one project file of any kind
     if [[ -n ${INPUT_PROJECT_TYPE} ]]; then
       project_type="${INPUT_PROJECT_TYPE}"
       readonly project_type
-      #elif [[ -e "${mvnfile}" && -e "${npmfile}" && -e "${gradlefile}" ]]; then TODO: check if more than one project file of any kind
-      #  project_type="?"
-      #  readonly project_type
     elif [[ -e "${npmfile}" ]]; then
       project_type="npm"
       readonly project_type
@@ -228,6 +258,8 @@ update_projectfile_version() {
       project_type="mvn"
     elif [[ -e "${gradlefile}" ]]; then
       project_type="gradle"
+    else
+      project_type="none"
     fi
 
     if [[ "${project_type}" == "mvn" && -e "${mvnfile}" ]]; then
@@ -239,12 +271,12 @@ update_projectfile_version() {
     elif [[ "${project_type}" == "gradle" && "${gradlefile}" ]]; then
       PROJECT_FILE="${gradlefile}"
       update_gradle_version "${gradlefile}"
-    else
-      err "Could not find project file for project type ${project_type}."
+    elif [[ "${project_type}" == "none" ]]; then
+      PROJECT_FILE=''
     fi
 
   else
-    info "Updating project version skipped!"
+    info "${YELLOW} Skipped project file version update!${NC}"
   fi
 }
 
@@ -254,13 +286,14 @@ commit_changelog_and_projectfile() {
   if [[ "${SKIP_ACTION}" == 'n' ]]; then
 
     local commit_msg="chore: release v${NEXT_TAG}"
-    git add CHANGELOG.md "${PROJECT_FILE}" && git commit --signoff --gpg-sign -m "${commit_msg}"
-    info "git add && git commit --signoff --gpg-sign: CHANGELOG.md, ${PROJECT_FILE}. Commit message: ${commit_msg}"
-
+    if [[ -n "${PROJECT_FILE}" ]]; then
+      git add CHANGELOG.md "${PROJECT_FILE}" 1>/dev/null && git commit -q --signoff --gpg-sign -m "${commit_msg}"
+    else
+      git add CHANGELOG.md 1>/dev/null && git commit -q --signoff --gpg-sign -m "${commit_msg}"
+    fi
+    info "${GREEN} ${CHECKMARK} ${NC} Added and committed ${YELLOW}CHANGELOG.md ${PROJECT_FILE}${NC}. Commit message: ${YELLOW}${commit_msg}${NC}"
   else
-
-    info "Skipped git commit of changelog and projectfile!"
-
+    info "${YELLOW} Skipped git commit of changelog and project file!${NC}"
   fi
 }
 
@@ -272,10 +305,10 @@ move_tag_to_release_commit() {
     local latest_commit
     latest_commit=$(git rev-parse HEAD)
 
-    git tag -f "${NEXT_TAG}" "${latest_commit}"
-    info "Moved tag ${NEXT_TAG} to latest commit ${latest_commit}"
+    git tag -f "${NEXT_TAG}" "${latest_commit}" -m "v${NEXT_TAG}" 1>/dev/null
+    info "${GREEN} ${CHECKMARK} ${NC} Moved tag ${YELLOW}${NEXT_TAG}${NC} to latest commit ${YELLOW}${latest_commit}${NC}"
   else
-    info "Skipped git commit of changelog and projectfile step!"
+    info "${YELLOW} Skipped git commit of changelog and projectfile step!${NC}"
   fi
 }
 
@@ -287,14 +320,14 @@ push_release_commit() {
     info "${YELLOW}No Git branch was given (option -b | --git-branch-name). Skipping final Git push. ${NC}"
   elif [[ "${SKIP_ACTION}" == 'n' ]]; then
     if [[ -z "${INPUT_GIT_BRANCH_NAME}" ]]; then
-      info "INPUT_GIT_BRANCH_NAME was empty, skipping git push. Set branch with -b/--git-branch-name"
+      info "${YELLOW}INPUT_GIT_BRANCH_NAME was empty, skipping git push. Set branch with -b/--git-branch-name${NC}"
       return 0
     fi
 
     git push --atomic origin "${INPUT_GIT_BRANCH_NAME}" "${NEXT_TAG}"
-    info "git: pushed tag and release commit to branch ${INPUT_GIT_BRANCH_NAME}"
+    info "${GREEN} ${CHECKMARK} ${NC} Git pushed tag and release commit to branch ${INPUT_GIT_BRANCH_NAME}"
   else
-    info "Skipped git push step!"
+    info "${YELLOW} Skipped git push!${NC}"
   fi
 }
 
@@ -347,9 +380,9 @@ parse_params() {
       readonly INPUT_GIT_BRANCH_NAME
       var=$var+1
       ;;
-    --git-host-name)
-      INPUT_GIT_HOST_NAME="${args[$var + 1]}"
-      readonly INPUT_GIT_HOST_NAME
+    -r | --repository-url)
+      INPUT_REPOURL="${args[$var + 1]}"
+      readonly INPUT_REPOURL
       var=$var+1
       ;;
     -i | --interactive)
@@ -372,7 +405,7 @@ main() {
 
   is_command_installed "git" "https://git-scm.com/"
   is_command_installed "semver" "https://github.com/mathew-fleisch/asdf-semver"
-  is_command_installed "git-changelog-command-line" "https://www.npmjs.com/package/git-changelog-command-line"
+  is_command_installed "git-chglog" "https://github.com/git-chglog/git-chglog"
   is_command_installed "npm" "https://github.com/asdf-vm/asdf-nodejs"
   is_command_installed "mvn" "https://github.com/Proemion/asdf-maven"
 

@@ -5,12 +5,22 @@
 # Bats integration test, operations are run in the distrubtions tmp folder
 # https://github.com/bats-core/bats-core
 
+# - Fancy colours
+readonly RED=$'\e[31m'
+readonly NC=$'\e[0m'
+readonly GREEN=$'\e[32m'
+readonly YELLOW=$'\e[0;33m'
+
+#Terminal chars
+readonly CHECKMARK=$'\xE2\x9C\x94'
+readonly MISSING=$'\xE2\x9D\x8C'
+
 function verify_that_basic_tools_is_accessible() {
 
   #Integration test won't mock dependencies, so first do a basic sanity check
   _is_command_installed "git" "https://git-scm.com/"
   _is_command_installed "semver" "https://github.com/mathew-fleisch/asdf-semver"
-  _is_command_installed 'git-changelog-command-line' "https://www.npmjs.com/package/git-changelog-command-line"
+  _is_command_installed "git-chglog" "https://github.com/git-chglog/git-chglog"
   _is_command_installed "npm" "https://github.com/asdf-vm/asdf-nodejs"
   _is_command_installed "mvn" "https://github.com/Proemion/asdf-maven"
 
@@ -56,7 +66,10 @@ function setup_git_test_branch() {
   #set up project for testing in the temp dir
   cp -R "bash/src/test/resources/${project_name}" "${TEST_TEMP_DIR}/"
   cp ./bash/src/changelog_release.bash "${TEST_TEMP_DIR}/${project_name}/"
-  cp ./bash/src/changelog_release.mustache "${TEST_TEMP_DIR}/${project_name}/"
+  cp ./bash/src/git-chglog-gl.yml "${TEST_TEMP_DIR}/${project_name}/"
+  cp ./bash/src/git-chglog-gh.yml "${TEST_TEMP_DIR}/${project_name}/"
+  cp ./bash/src/CHANGELOG_GH.tpl.md "${TEST_TEMP_DIR}/${project_name}/"
+  cp ./bash/src/CHANGELOG_GL.tpl.md "${TEST_TEMP_DIR}/${project_name}/"
 
   cd "${TEST_TEMP_DIR}/${project_name}" || exit 1
 
@@ -122,7 +135,7 @@ function clone_and_verify_result() {
   fi
 
   tag_version=$(git tag | tr -d v | sort -V | tail -1)
-  commithash_tag_points_to=$(git rev-parse 1.1.0)
+  commithash_tag_points_to=$(git rev-list -n 1 1.1.0)
   changed_files=$(git diff-tree --no-commit-id --name-only -r "${commithash_tag_points_to}" | sort | tr -d '\n')
   commit_message=$(git show -s --format=%B "${commithash_tag_points_to}" | head -1)
 
@@ -137,7 +150,9 @@ function clone_and_verify_result() {
 
   assert_success
 
-  assert_equal '1.1.0' "${project_version}"
+  if [[ -n "${PROJECT_FILE}" ]]; then
+    assert_equal '1.1.0' "${project_version}"
+  fi
   assert_equal "${expected_changed_files}" "${changed_files}"
 
   assert_equal 'chore: release v1.1.0' "${commit_message}"
@@ -156,15 +171,22 @@ function assert_scriptrun_output() {
   git remote add origin ../integtest.git
   run ./changelog_release.bash --git-branch-name "${branch_name}"
 
-  assert_output --partial "Auto calculating next tag with semver scope: minor."
-  assert_output --partial "Will use tag version 1.1.0"
-  assert_output --partial "Git tagged (signed): 1.1.0"
-  assert_output --partial "Generate changelog"
-  assert_output --partial "Generated changelog as ./CHANGELOG.md"
-  assert_output --partial "Updated ${project_file_name} version to 1.1.0"
-  assert_output --partial "Updated tag '1.1.0'"
-  assert_output --partial "Moved tag 1.1.0 to latest commit"
-  assert_output --partial "git: pushed tag and release commit to branch ${branch_name}"
+  assert_output --partial "Calculating next tag from semver scope: ${YELLOW}minor${NC}"
+  assert_output --partial "Calculated tag version: ${YELLOW}1.1.0${NC}"
+  assert_output --partial "Tagged (signed): ${YELLOW}1.1.0${NC}"
+  assert_output --partial "Generating changelog ..."
+  assert_output --partial "Generated changelog as ${YELLOW}./CHANGELOG.md${NC}"
+
+  if [[ -n "${project_file_name}" ]]; then
+    assert_output --partial "Updated ${project_file_name} version to ${YELLOW}1.1.0${NC}"
+    assert_output --partial "Added and committed ${YELLOW}CHANGELOG.md ./${project_file_name}${NC}. Commit message: ${YELLOW}chore: release v1.1.0${NC}"
+  else
+    assert_output --partial "Added and committed ${YELLOW}CHANGELOG.md ${NC}. Commit message: ${YELLOW}chore: release v1.1.0${NC}"
+
+  fi
+
+  assert_output --partial "Moved tag ${YELLOW}1.1.0${NC} to latest commit"
+  assert_output --partial "Git pushed tag and release commit to branch ${branch_name}"
 
   assert_success
 
@@ -202,4 +224,14 @@ function gradle_project_is_tagged_and_updated_correctly() { #@test
   setup_git_test_branch "${project_name}" "${branch_name}" "${tag_name}"
   assert_scriptrun_output "${project_name}" "${branch_name}" 'gradle.properties'
   clone_and_verify_result 'gradle' "${project_name}" 'CHANGELOG.mdgradle.properties' "${branch_name}"
+}
+
+function project_with_no_supported_projectfile_is_tagged_and_updated_correctly() { #@test
+  local -r project_name='random-project'
+  local -r branch_name='random_test'
+  local -r tag_name='1.0.1'
+
+  setup_git_test_branch "${project_name}" "${branch_name}" "${tag_name}"
+  assert_scriptrun_output "${project_name}" "${branch_name}" ''
+  clone_and_verify_result 'random' "${project_name}" 'CHANGELOG.md' "${branch_name}"
 }

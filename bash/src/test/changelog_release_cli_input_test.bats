@@ -137,16 +137,6 @@ function git_branch_name_long_flag_is_set { #@test
 
 }
 
-function git_host_name_flag_is_set() { #@test
-
-  local INPUT_GIT_HOST_NAME=''
-
-  parse_params --git-host-name 'host.org'
-
-  assert_equal 'host.org' "${INPUT_GIT_HOST_NAME}"
-
-}
-
 function interactive_flag_is_set { #@test
 
   local INPUT_IS_INTERACTIVE=''
@@ -171,16 +161,14 @@ function all_flags_are_set() { #@test
   local INPUT_SEMVER_SCOPE=''
   local INPUT_PROJECT_TYPE=''
   local INPUT_GIT_BRANCH_NAME=''
-  local INPUT_GIT_HOST_NAME=''
   local INPUT_IS_INTERACTIVE=''
 
-  parse_params -s 'scope' -t 'tag' -p 'type' -b 'branch' --git-host-name 'host' --interactive
+  parse_params -s 'scope' -t 'tag' -p 'type' -b 'branch' --interactive
 
   assert_equal 'tag' "${INPUT_TAG}"
   assert_equal 'scope' "${INPUT_SEMVER_SCOPE}"
   assert_equal 'type' "${INPUT_PROJECT_TYPE}"
   assert_equal 'branch' "${INPUT_GIT_BRANCH_NAME}"
-  assert_equal 'host' "${INPUT_GIT_HOST_NAME}"
   assert_equal 'y' "${INPUT_IS_INTERACTIVE}"
 
 }
