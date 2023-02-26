@@ -17,6 +17,8 @@ jobs:
           asdf plugin add semver
           asdf install semver latest
           asdf global semver latest
-          npm install -g git-changelog-command-line
+          asdf plugin add git-chglog
+          asdf install git-chglog latest
+          asdf global git-chglog latest
           bash/install_bats.bash
           bash/lib/bats/bin/bats bash/src/test

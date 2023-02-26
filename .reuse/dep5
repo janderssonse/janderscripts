@@ -1,6 +1,10 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 
-Files: .gitignore .gitattributes .github/workflows/*.yml docs/img/*.png .editorconfig **/*.mustache configs/mega-linter.yml *.md *.adoc CONTRIBUTING.adoc bash/src/test/resources/**/*
+Files: .gitignore .gitattributes .github/workflows/*.yml docs/img/*.png .conform.yaml .editorconfig **/*.mustache configs/mega-linter.yml *.md *.adoc CONTRIBUTING.adoc bash/src/test/resources/**/*
+Copyright: 2022 Josef Andersson
+License: CC0-1.0
+
+Files: bash/src/*.yml
 Copyright: 2022 Josef Andersson
 License: CC0-1.0
 

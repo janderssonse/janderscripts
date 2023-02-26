@@ -45,7 +45,7 @@ function validate_input_git_check_success_on_same_branchnames_but_fails_on_branc
   INPUT_GIT_BRANCH_NAME="another_branch_name"
 
   run validate_input
-  assert_output --partial 'misfortunes'
+  assert_output --partial 'You are running the script from branch'
   assert_failure
 
 }
@@ -147,8 +147,7 @@ function tag_with_next_version_success() { #@test
   local NEXT_TAG='next_tag'
 
   run tag_with_next_version
-  assert_output --partial "tag -s next_tag -m vnext"_
-  assert_output --partial "Git tagged (signed): next_tag"
+  assert_output --partial "Tagged (signed): ${YELLOW}next_tag${NC}"
   assert_success
 
 }
@@ -156,18 +155,17 @@ function tag_with_next_version_success() { #@test
 function generate_changelog_success() { #@test
 
   git() {
-    echo "the_oldest_tag"
+    echo "mockgit"
   }
-  npx() {
+  git-chglog() {
     echo "$@"
   }
 
   local NEXT_TAG='next_tag'
 
   run generate_changelog
-  assert_output --partial "the_oldest_tag"
-  assert_output --partial 'git-changelog-command-line -ex {"oldest_tag": "the_oldest_tag","host": "gitlab.com"}'
-  assert_output --partial "Generated changelog as ./CHANGELOG.md"
+  assert_output --partial 'git-chglog-gl.yml -o CHANGELOG.md'
+  assert_output --partial "Generated changelog as ${YELLOW}./CHANGELOG.md${NC}"
   assert_success
 
 }
@@ -236,8 +234,7 @@ function update_projectfile_version_chooses_pom_or_package_correctly() { #@test
   # Could not decide project type, fail
 
   run update_projectfile_version './'
-  assert_output --partial 'Could not find project file for project type ?'
-  assert_failure
+  assert_success
 
   touch "${TEST_TEMP_DIR}/pom.xml"
 
@@ -285,8 +282,8 @@ function commit_changelog_and_projectfile_triggers_git_calls_with_correct_variab
   }
 
   run commit_changelog_and_projectfile
-  assert_output --partial "add CHANGELOG.md testfilename"
-  assert_output --partial "commit --signoff --gpg-sign -m ${commit_msg}"
+  assert_output --partial "Added and committed ${YELLOW}CHANGELOG.md testfilename${NC}. Commit message: ${YELLOW}chore: release vtesttag${NC}"
+  assert_output --partial "gitmock: arguments: commit -q --signoff --gpg-sign -m ${commit_msg}"
   assert_success
 }
 
@@ -300,8 +297,7 @@ function move_tag_to_release_commit_triggers_git_correct_git_calls_with_correct_
   }
 
   run move_tag_to_release_commit
-  assert_output --partial "gitmock: arguments: rev-parse HEAD"
-  assert_output --partial "gitmock: arguments: tag -f testtag gitmock: arguments: rev-parse HEAD"
+  assert_output --partial "Moved tag ${YELLOW}testtag${NC} to latest commit ${YELLOW}gitmock: arguments: rev-parse HEAD${NC}"
 
 }
 
