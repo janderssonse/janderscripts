@@ -8,10 +8,8 @@
 # * Setting or increase git tag,
 # * Setting the version in the project file
 # * Generate a changelog
-# * Commit the changelog and updated project file in "release commit" which con.
+# * Commit the changelog and updated project file in a "release commit.
 #
-# At least add support for gradle,
-# Add support for generating GitHub/Lab release
 #
 
 # abort on nonzero exitstatus
@@ -29,6 +27,7 @@ INPUT_REPOURL=''
 INPUT_TAG=""
 
 # ---
+PROJECT_TYPE=''
 PROJECT_FILE=""
 NEXT_TAG=""
 SKIP_ACTION='n'
@@ -67,7 +66,8 @@ check_interactive() {
 
 err() {
   printf "\n"
-  printf "%s\n" "${MISSING} ${RED} $* ${NC} ----- [$(date +'%Y-%m-%dT%H:%M:%S%z')]" >&2
+  printf "%s\n" "${MISSING} ${RED} $* ${NC}" >&2
+  printf "\n"
   exit 1
 }
 
@@ -87,6 +87,61 @@ validate_semver() {
   fi
 }
 
+validate_basic_ssh_conf() {
+
+  local ssh_agent_has_added_identity
+
+  # Has the user an ssh running
+  ssh-add -l >/dev/null
+  if [[ "$?" == 2 ]]; then
+    # shellcheck disable=SC2016
+    err 'Tested ssh-add -l, failed - is the ssh-agent running? Hint: eval $(ssh-agent -s)'
+  fi
+
+  # Has the user an ssh running, with at least one identiy added?
+  ssh_agent_has_added_identity=$(ssh-add -l)
+  if [[ "${ssh_agent_has_added_identity=}" == 'The agent has no identities.' ]]; then
+    err 'ssh-agent has no added identities. Hint: ssh-add <your-priv-ssh-key>)'
+  fi
+
+}
+
+validate_basic_git_conf() {
+
+  local git_user
+  local git_email
+  local git_gpgformat
+  local git_commitsign
+  local git_tagsign
+  git_user=$(git config --get user.name)
+  git_email=$(git config --get user.email)
+  git_gpgformat=$(git config --get gpg.format)
+  git_commitsign=$(git config --get commit.gpgsign)
+  git_tagsign=$(git config --get tag.gpgsign)
+
+  # Has the user configured git user,email,gpgformat,commit and tag correctly?
+  if [[ -z "${git_user}" ]]; then
+    err "Your git user is not set in your configuration. Please check your git config: (git config --get user.name)."
+  fi
+
+  if [[ -z "${git_email}" ]]; then
+    err "Your git user is not set in your configuration. Please check your git config: (git config --get user.email)."
+  fi
+
+  if [[ "${git_gpgformat}" != 'ssh' ]]; then
+    err "Your git gpg format is not set to ssh in your configuration. Please check your git config: (git config --get gpg.format)."
+  fi
+
+  if [[ "${git_commitsign}" != 'true' ]]; then
+    err "Your git commit is not set to sign commits. Please check your git config: (git config --get commit.gpgsign)."
+  fi
+
+  if [[ "${git_tagsign}" != 'true' ]]; then
+    err "Your git tag is not set to sign tags. Please check your git config: (git config --get tag.gpgsign)."
+  fi
+}
+
+# Basic sanity checks
 validate_input() {
 
   local current_branch
@@ -95,14 +150,71 @@ validate_input() {
   # Warn for potential git branch mismatch
   if [[ "${INPUT_GIT_BRANCH_NAME}" != "none" && "${INPUT_GIT_BRANCH_NAME}" != "${current_branch}" ]]; then
 
-    info "${GREEN} To help avoid misfortunes with pushes, run the script from same branch you will push to. Use with${NC} -b /--git-branch-name option."
-    err "You are running the script from branch: ${current_branch} and would like to push to: ${INPUT_GIT_BRANCH_NAME}"
+    info "${GREEN} To help avoid misfortunes with Git Push, run the script from same branch you will push to. ${NC} To push, set -b /--git-branch-name option."
+    err "You are running the script from checkout branch: ${current_branch} and would like to push to: ${INPUT_GIT_BRANCH_NAME}"
   fi
 
   #Validate given tag
   if [[ -n "${INPUT_TAG}" ]]; then
     validate_semver "${INPUT_TAG}"
   fi
+
+}
+
+set_project_type_or_guess_from_project_file() {
+
+  local project_file_path="$1"
+  local mvnfile="${project_file_path}pom.xml"
+  local npmfile="${project_file_path}package.json"
+  local gradlefile="${project_file_path}gradle.properties"
+
+  #TODO: Add validation on INPUT_PROJECT_TYPE
+  #TOOO_ validate file exists if choosen
+  #TODO: Add scenario of multiple files found
+  if [[ -n ${INPUT_PROJECT_TYPE} ]]; then
+    PROJECT_TYPE="${INPUT_PROJECT_TYPE}"
+    if [[ "${PROJECT_TYPE}" == 'mvn' ]]; then
+      PROJECT_FILE="${mvnfile}"
+    elif [[ "${PROJECT_TYPE}" == 'npm' ]]; then
+      PROJECT_FILE="${npmfile}"
+    elif [[ "${PROJECT_TYPE}" == 'gradle' ]]; then
+      PROJECT_FILE="${gradlefile}"
+    fi
+  elif [[ -e "${npmfile}" ]]; then
+    PROJECT_TYPE="npm"
+    PROJECT_FILE="${npmfile}"
+  elif [[ -e "${mvnfile}" ]]; then
+    PROJECT_TYPE="mvn"
+    PROJECT_FILE="${mvnfile}"
+  elif [[ -e "${gradlefile}" ]]; then
+    PROJECT_TYPE="gradle"
+    PROJECT_FILE="${gradlefile}"
+  else
+    PROJECT_TYPE="none"
+  fi
+
+  readonly PROJECT_TYPE
+  readonly PROJECT_FILE
+
+  #if mvn, check all deps are available locally or fail (i.e we don't want to bulid and fetch etc)
+  if [[ "${PROJECT_TYPE}" == 'mvn' ]]; then
+
+    if [[ -n "${LOCAL_MVN_REPO:-}" ]]; then
+      mvn -q clean -Dmaven.repo.local="${LOCAL_MVN_REPO}"
+    else
+      mvn -q clean
+    fi
+    # shellcheck disable=SC2181
+    if [[ "$?" -gt 0 ]]; then
+      err 'With Maven as project type, make sure all dependencis are fetched before this script'
+    fi
+  fi
+}
+
+pre_run_validation() {
+  validate_basic_ssh_conf
+  validate_basic_git_conf
+  validate_input
 
 }
 
@@ -177,6 +289,11 @@ tag_with_next_version() {
   if [[ "${SKIP_ACTION}" == 'n' ]]; then
 
     git tag -s "${NEXT_TAG}" -m "v${NEXT_TAG}"
+
+    if [[ ! "$?" ]]; then
+      err "Something went wrong when running git tag -s ${NEXT_TAG} -m v${NEXT_TAG}, exiting."
+    fi
+
     info "${GREEN} ${CHECKMARK} ${NC} Tagged (signed): ${YELLOW}${NEXT_TAG}${NC}"
 
   else
@@ -205,11 +322,11 @@ generate_changelog() {
     local scriptdir
     scriptdir=$(dirname -- "$0")
 
-    local git_chglog_conf="${scriptdir}/git-chglog-gl.yml"
+    local git_chglog_conf="${scriptdir}/changelog_release_templates/git-chglog-gl.yml"
 
     # Different styles for gitlab/github
     if [[ "${repourl}" == *'github'* ]]; then
-      git_chglog_conf="${scriptdir}/git-chglog-gh.yml"
+      git_chglog_conf="${scriptdir}/changelog_release_templates/git-chglog-gh.yml"
     fi
 
     #info "Generate changelog ........ ${repourl}"
@@ -226,7 +343,12 @@ update_npm_version() {
 }
 
 update_pom_version() {
-  mvn -q versions:set -DnewVersion="${NEXT_TAG}"
+  if [[ -n "${LOCAL_MVN_REPO:-}" ]]; then
+    mvn -q versions:set -DnewVersion="${NEXT_TAG}" -Dmaven.repo.local="${LOCAL_MVN_REPO}"
+  else
+    mvn -q versions:set -DnewVersion="${NEXT_TAG}"
+  fi
+
   info "${GREEN} ${CHECKMARK} ${NC} Updated pom.xml version to ${YELLOW}${NEXT_TAG}${NC}"
 }
 
@@ -241,38 +363,14 @@ update_projectfile_version() {
 
   if [[ "${SKIP_ACTION}" == 'n' ]]; then
 
-    local project_type='?'
-    local project_file_path="$1"
-    local mvnfile="${project_file_path}pom.xml"
-    local npmfile="${project_file_path}package.json"
-    local gradlefile="${project_file_path}gradle.properties"
-
-    #TODO: check if more than one project file of any kind
-    if [[ -n ${INPUT_PROJECT_TYPE} ]]; then
-      project_type="${INPUT_PROJECT_TYPE}"
-      readonly project_type
-    elif [[ -e "${npmfile}" ]]; then
-      project_type="npm"
-      readonly project_type
-    elif [[ -e "${mvnfile}" ]]; then
-      project_type="mvn"
-    elif [[ -e "${gradlefile}" ]]; then
-      project_type="gradle"
+    if [[ "${PROJECT_TYPE}" == "mvn" ]]; then
+      update_pom_version
+    elif [[ "${PROJECT_TYPE}" == "npm" ]]; then
+      update_npm_version
+    elif [[ "${PROJECT_TYPE}" == "gradle" ]]; then
+      update_gradle_version
     else
-      project_type="none"
-    fi
-
-    if [[ "${project_type}" == "mvn" && -e "${mvnfile}" ]]; then
-      PROJECT_FILE="${mvnfile}"
-      update_pom_version "${mvnfile}"
-    elif [[ "${project_type}" == "npm" && "${npmfile}" ]]; then
-      PROJECT_FILE="${npmfile}"
-      update_npm_version "${npmfile}"
-    elif [[ "${project_type}" == "gradle" && "${gradlefile}" ]]; then
-      PROJECT_FILE="${gradlefile}"
-      update_gradle_version "${gradlefile}"
-    elif [[ "${project_type}" == "none" ]]; then
-      PROJECT_FILE=''
+      info "${YELLOW} Skipped project file version update, as there was no project type found. Type: ${PROJECT_TYPE} File: ${PROJECT_FILE}${NC}"
     fi
 
   else
@@ -324,20 +422,25 @@ push_release_commit() {
       return 0
     fi
 
-    git push --atomic origin "${INPUT_GIT_BRANCH_NAME}" "${NEXT_TAG}"
+    #-- we could use --atomic here, but on real life tests traditional pipelines are acting on push OR push tag - not both
+    # so...lets do two seperate "events"
+    git push origin "${INPUT_GIT_BRANCH_NAME}"
+    git push origin "${NEXT_TAG}"
+
     info "${GREEN} ${CHECKMARK} ${NC} Git pushed tag and release commit to branch ${INPUT_GIT_BRANCH_NAME}"
   else
     info "${YELLOW} Skipped git push!${NC}"
   fi
 }
 
-run_flow() {
+run_() {
 
-  validate_input
+  pre_run_validation
+  set_project_type_or_guess_from_project_file './'
   calculate_next_version
   tag_with_next_version
   generate_changelog
-  update_projectfile_version './'
+  update_projectfile_version
   commit_changelog_and_projectfile
   move_tag_to_release_commit
   push_release_commit
@@ -408,10 +511,11 @@ main() {
   is_command_installed "git-chglog" "https://github.com/git-chglog/git-chglog"
   is_command_installed "npm" "https://github.com/asdf-vm/asdf-nodejs"
   is_command_installed "mvn" "https://github.com/Proemion/asdf-maven"
+  is_command_installed "ssh-add" "https://github.com/Proemion/asdf-maven"
 
   printf "%s\n" "Running ${GREEN} changelog_release${NC}... -h or --help for help."
   parse_params "$@"
-  run_flow
+  run_
 }
 
 # Only runs main if not sourced.

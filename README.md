@@ -32,10 +32,7 @@ The script principles are:
 ./bash/src/<script>.bash -h
 ```
 
-### changelog_release usage
-
-> **Warning**
-> Don't play with this just yet, I still have fix an important issue with paths, and add and publish image for convinience usage.
+### SCRIPT: changelog_release usage
 
 To make a nice release commit might need a few boring steps - adding a changelog, tagging, update project verison. Add Conventional commits, signing and signoffs. It is easy to forget and miss something. So why not make it easier, a one step process:
 
@@ -46,8 +43,25 @@ This script:
 3. updates the project file version with the version tag
 4. commits the changelog and tag in one atomic release commit
 
-See --help for options.
+#### Requirements
 
+1. Your project is following Conventional Commits Standard.
+2. Your Git Settings is configured to sign and tag with SSH.
+3. You need asdf installed to easily download all dependencies for the script.
+
+#### Usage
+
+1. Clone this repo
+```console
+git@github.com:janderssonse/janderscripts.git
+```
+
+2. From the root dir of the project you are about to update changelog to, do
+```console
+/path/to/repo/you/just/cloned/bash/src/changelog_release.bash --help
+```
+
+And you should an overview of options.
 **The script requires that you are following the [conventional commit]https://www.conventionalcommits.org) format, and the commits and tags will be gpg-signed and signed off.**
 
 #### Examples

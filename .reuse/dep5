@@ -4,6 +4,10 @@ Files: .gitignore .gitattributes .github/workflows/*.yml docs/img/*.png .conform
 Copyright: 2022 Josef Andersson
 License: CC0-1.0
 
+Files: .gitconfig .tool-versions Dockerfile scripts/*.sh
+Copyright: 2022 Josef Andersson
+License: CC0-1.0
+
 Files: bash/src/*.yml
 Copyright: 2022 Josef Andersson
 License: CC0-1.0

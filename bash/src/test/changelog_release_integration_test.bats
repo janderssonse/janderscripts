@@ -46,9 +46,12 @@ function setup_file() {
   )
 
   export TEST_TEMP_DIR
-
+  eval $(ssh-agent -s)
 }
 
+function teardown_file() {
+  killall ssh-agent
+}
 # has to be done as bats cant find the assert_output etc, they are not exported from setup_file. Investigate with bats if bug or feature.
 function setup() {
 
@@ -66,10 +69,7 @@ function setup_git_test_branch() {
   #set up project for testing in the temp dir
   cp -R "bash/src/test/resources/${project_name}" "${TEST_TEMP_DIR}/"
   cp ./bash/src/changelog_release.bash "${TEST_TEMP_DIR}/${project_name}/"
-  cp ./bash/src/git-chglog-gl.yml "${TEST_TEMP_DIR}/${project_name}/"
-  cp ./bash/src/git-chglog-gh.yml "${TEST_TEMP_DIR}/${project_name}/"
-  cp ./bash/src/CHANGELOG_GH.tpl.md "${TEST_TEMP_DIR}/${project_name}/"
-  cp ./bash/src/CHANGELOG_GL.tpl.md "${TEST_TEMP_DIR}/${project_name}/"
+  cp -R ./bash/src/changelog_release_templates "${TEST_TEMP_DIR}/${project_name}/"
 
   cd "${TEST_TEMP_DIR}/${project_name}" || exit 1
 
@@ -78,10 +78,12 @@ function setup_git_test_branch() {
   git config user.email "test@tester.com"
   git config user.name "Test Testsson"
   git config gpg.format ssh
-  ssh-keygen -b 1024 -t rsa -f "${TEST_TEMP_DIR}/${project_name}/sshkey" -q -N ''
+  git config tag.gpgsign true
+  git config commit.gpgsign true
   git config user.signingkey "${TEST_TEMP_DIR}/${project_name}/sshkey.pub"
+  ssh-keygen -b 1024 -t rsa -f "${TEST_TEMP_DIR}/${project_name}/sshkey" -q -N ''
+  ssh-add "${TEST_TEMP_DIR}/${project_name}/sshkey"
   git add . && git commit -m 'chore: initial commit'
-
   touch dummy{1..6}
 
   git add dummy1 && git commit -m 'feat: a feat commit'
@@ -197,6 +199,7 @@ function mvn_project_is_tagged_and_updated_correctly() { #@test
   local -r project_name='java-project'
   local -r branch_name='mvn_test'
   local -r tag_name='1.0.1'
+
 
   setup_git_test_branch "${project_name}" "${branch_name}" "${tag_name}"
   assert_scriptrun_output "${project_name}" "${branch_name}" 'pom.xml'
