@@ -45,7 +45,7 @@ function validate_input_git_check_success_on_same_branchnames_but_fails_on_branc
   INPUT_GIT_BRANCH_NAME="another_branch_name"
 
   run validate_input
-  assert_output --partial 'You are running the script from branch'
+  assert_output --partial 'You are running the script from checkout branch'
   assert_failure
 
 }
@@ -195,7 +195,7 @@ function update_pom_success() { #@test
 
   run update_pom_version
 
-  assert_output --partial 'mockmvn -q versions:set -DnewVersion=next_tag'
+  assert_output --partial 'mockmvn -o -q versions:set -DnewVersion=next_tag'
   assert_success
 
 }
@@ -231,44 +231,58 @@ function update_projectfile_version_chooses_pom_or_package_correctly() { #@test
     echo "mock_update_gradle_version"
   }
 
-  # Could not decide project type, fail
+  # Could not decide project type
 
-  run update_projectfile_version './'
+  local project_file_path="${TEST_TEMP_DIR}"
+  local mvnfile="${project_file_path}/pom.xml"
+  local npmfile="${project_file_path}/package.json"
+  local gradlefile="${project_file_path}/gradle.properties"
+
+  run update_projectfile_version
   assert_success
 
   touch "${TEST_TEMP_DIR}/pom.xml"
 
   # A pom file found
-  run update_projectfile_version "${TEST_TEMP_DIR}/"
+  PROJECT_FILE="${mvnfile}"
+  PROJECT_TYPE='mvn'
+  run update_projectfile_version
   assert_output --partial 'mock_update_pom_version'
   assert_success
 
   rm "${TEST_TEMP_DIR}/pom.xml"
   touch "${TEST_TEMP_DIR}/package.json"
 
+  PROJECT_FILE="${npmfile}"
+  PROJECT_TYPE='npm'
   # A package json file found
-  run update_projectfile_version "${TEST_TEMP_DIR}/"
+  run update_projectfile_version
   assert_output --partial 'mock_update_npm_version'
   assert_success
 
   rm "${TEST_TEMP_DIR}/package.json"
   touch "${TEST_TEMP_DIR}/gradle.properties"
 
+  PROJECT_FILE="${gradlefile}"
+  PROJECT_TYPE='gradle'
   # A gradle properties file found
-  run update_projectfile_version "${TEST_TEMP_DIR}/"
+  run update_projectfile_version
   assert_output --partial 'mock_update_gradle_version'
   assert_success
+
+  rm "${TEST_TEMP_DIR}/gradle.properties"
+
+  PROJECT_FILE=''
+  PROJECT_TYPE=''
   #Input project file given
   local INPUT_PROJECT_TYPE=''
 
   # TODO:Could not decide project type, multiple gradle pom and package.json same dir, fail
-  #touch "${TEST_TEMP_DIR}/pom.xml"
-
-  #run update_projectfile_version "${TEST_TEMP_DIR}/"
+  run update_projectfile_version
+  assert_output --partial "${YELLOW} Skipped project file version update, as there"
   #assert_output --partial 'Could not find project file for project type ?'
   #assert_failure
   #
-  rm "${TEST_TEMP_DIR}/gradle.properties"
 }
 
 function commit_changelog_and_projectfile_triggers_git_calls_with_correct_variables() { #@test
@@ -316,7 +330,9 @@ function push_release_commit_with_tag_and_branchname_if_arguments_set() { #@test
 
   INPUT_GIT_BRANCH_NAME='branchname'
   run push_release_commit
-  assert_output --partial "push --atomic origin branchname testtag"
+
+  assert_output --partial "gitmock: arguments: push origin branchname"
+  assert_output --partial "gitmock: arguments: push origin testtag"
   assert_success
 
 }

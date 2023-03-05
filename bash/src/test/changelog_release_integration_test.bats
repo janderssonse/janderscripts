@@ -66,10 +66,7 @@ function setup_git_test_branch() {
   #set up project for testing in the temp dir
   cp -R "bash/src/test/resources/${project_name}" "${TEST_TEMP_DIR}/"
   cp ./bash/src/changelog_release.bash "${TEST_TEMP_DIR}/${project_name}/"
-  cp ./bash/src/git-chglog-gl.yml "${TEST_TEMP_DIR}/${project_name}/"
-  cp ./bash/src/git-chglog-gh.yml "${TEST_TEMP_DIR}/${project_name}/"
-  cp ./bash/src/CHANGELOG_GH.tpl.md "${TEST_TEMP_DIR}/${project_name}/"
-  cp ./bash/src/CHANGELOG_GL.tpl.md "${TEST_TEMP_DIR}/${project_name}/"
+  cp -R ./bash/src/changelog_release_templates "${TEST_TEMP_DIR}/${project_name}/"
 
   cd "${TEST_TEMP_DIR}/${project_name}" || exit 1
 
@@ -78,6 +75,8 @@ function setup_git_test_branch() {
   git config user.email "test@tester.com"
   git config user.name "Test Testsson"
   git config gpg.format ssh
+  git config tag.gpgsign true
+  git config commit.gpgsign true
   ssh-keygen -b 1024 -t rsa -f "${TEST_TEMP_DIR}/${project_name}/sshkey" -q -N ''
   git config user.signingkey "${TEST_TEMP_DIR}/${project_name}/sshkey.pub"
   git add . && git commit -m 'chore: initial commit'
