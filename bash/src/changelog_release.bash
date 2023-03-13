@@ -51,12 +51,16 @@ check_interactive() {
       read -r -n 1 -p "${user_info}" SKIP_ACTION
       case "${SKIP_ACTION}" in
       [y]*)
+        printf "\n"
         break
         ;;
       [n]*)
+        printf "\n"
         break
         ;;
-      *) echo "Please answer y or n." ;;
+      *)
+        printf "\n%s\n" 'Please answer y or n: '
+        ;;
       esac
     done
 
@@ -113,13 +117,15 @@ validate_basic_git_conf() {
   local git_gpgformat
   local git_commitsign
   local git_tagsign
+  local user_signingkey
   git_user=$(git config --get user.name)
   git_email=$(git config --get user.email)
   git_gpgformat=$(git config --get gpg.format)
   git_commitsign=$(git config --get commit.gpgsign)
   git_tagsign=$(git config --get tag.gpgsign)
+  user_signingkey=$(git config --get user.signingkey)
 
-  # Has the user configured git user,email,gpgformat,commit and tag correctly?
+  # Has the user configured git user,email,gpgformat,commit, tag and signingkey correctly?
   if [[ -z "${git_user}" ]]; then
     err "Your git user is not set in your configuration. Please check your git config: (git config --get user.name)."
   fi
@@ -139,6 +145,10 @@ validate_basic_git_conf() {
   if [[ "${git_tagsign}" != 'true' ]]; then
     err "Your git tag is not set to sign tags. Please check your git config: (git config --get tag.gpgsign)."
   fi
+
+  if [[ -z "${user_signingkey}" ]]; then
+    err "Your ssh git user signingkey is not set in your configuration. Please check your git config: (git config --get user.signingkey). Dont use a path, inline it)."
+  fi
 }
 
 # Basic sanity checks
@@ -146,6 +156,11 @@ validate_input() {
 
   local current_branch
   current_branch=$(git branch --show-current)
+
+  #shellcheck disable=SC2181
+  if [[ "$?" -gt 0 ]]; then
+    err "Failed git branch --show-current, it seems you are not running this from a Git enabled directory"
+  fi
 
   # Warn for potential git branch mismatch
   if [[ "${INPUT_GIT_BRANCH_NAME}" != "none" && "${INPUT_GIT_BRANCH_NAME}" != "${current_branch}" ]]; then
@@ -302,7 +317,7 @@ tag_with_next_version() {
 }
 
 generate_changelog() {
-  check_interactive "Do you want to skip changelog generation? (y/n)"
+  check_interactive "Do you want to skip changelog generation? (y/n): "
 
   if [[ "${SKIP_ACTION}" == 'n' ]]; then
 
@@ -396,7 +411,7 @@ commit_changelog_and_projectfile() {
 }
 
 move_tag_to_release_commit() {
-  check_interactive "Do you want to skip moving tag ${NEXT_TAG} to the latest commit?"
+  check_interactive "Do you want to skip moving tag ${NEXT_TAG} to the latest commit? (y/n): "
 
   if [[ "${SKIP_ACTION}" == 'n' ]]; then
 
@@ -412,7 +427,7 @@ move_tag_to_release_commit() {
 
 push_release_commit() {
 
-  check_interactive "Do you want to skip Git push of your latest commit (and tag)? (y/n). Would push to origin, branch: ${INPUT_GIT_BRANCH_NAME}."
+  check_interactive "Do you want to skip Git push of your latest commit (and tag)? (y/n). Would push to origin, branch: ${INPUT_GIT_BRANCH_NAME}: "
 
   if [[ "${INPUT_GIT_BRANCH_NAME}" == "none" ]]; then
     info "${YELLOW}No Git branch was given (option -b | --git-branch-name). Skipping final Git push. ${NC}"

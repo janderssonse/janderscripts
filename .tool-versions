@@ -1,5 +1,5 @@
-git-chglog      0.15.4          /app/repo/.tool-versions
-java            adoptopenjdk-17.0.4+101 /app/repo/.tool-versions
-maven           3.8.7           /app/repo/.tool-versions
-nodejs          18.4.0          /app/repo/.tool-versions
-semver          3.4.0           /app/repo/.tool-versions
+git-chglog      0.15.4          
+java            adoptopenjdk-17.0.4+101 
+maven           3.8.7           
+nodejs          18.4.0          
+semver          3.4.0           

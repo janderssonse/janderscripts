@@ -84,3 +84,4 @@ bash/lib/
 #.vscode
 megalinter-reports
 **/*/.gradle
+.vscode

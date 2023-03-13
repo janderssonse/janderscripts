@@ -200,7 +200,6 @@ function mvn_project_is_tagged_and_updated_correctly() { #@test
   local -r branch_name='mvn_test'
   local -r tag_name='1.0.1'
 
-
   setup_git_test_branch "${project_name}" "${branch_name}" "${tag_name}"
   assert_scriptrun_output "${project_name}" "${branch_name}" 'pom.xml'
   clone_and_verify_result 'mvn' "${project_name}" 'CHANGELOG.mdpom.xml' "${branch_name}"

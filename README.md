@@ -15,7 +15,7 @@ The script principles are:
 
 ### Bash
 
-- bash/src/changelog_release.bash - A util script to making an atomic release commit including an tag, changelog, updated project file. mvn, npm or gradle. Relies on Conventional Commits-standard. 
+- bash/src/changelog_release.bash - A util script to making an atomic release commit including an tag, changelog, updated project file. mvn, npm or gradle. Relies on Conventional Commits-standard.
 - bash/src/dirsumgen.bash - A wrapper for the creating md5 and sha256 sums for directory trees. One of each for each dir.
 
 ## Dependencies
@@ -41,7 +41,7 @@ This script:
 1. calculate and tags next semver tag
 2. generates a changelog
 3. updates the project file version with the version tag
-4. commits the changelog and tag in one atomic release commit
+4. commits the changelog and tag in a release commit
 
 #### Requirements
 
@@ -51,17 +51,39 @@ This script:
 
 #### Usage
 
-1. Clone this repo
+- Clone this repo
+
 ```console
 git@github.com:janderssonse/janderscripts.git
 ```
 
-2. From the root dir of the project you are about to update changelog to, do
+#### Alternative 1 - Running the Changelog_Release script directly
+
+1. Install [asdf-vm](https://asdf-vm.com/guide/getting-started.html)
+
+2. Install the needed dependencies. Here are two commands that adds the plugins and then installs them for you.
+
 ```console
-/path/to/repo/you/just/cloned/bash/src/changelog_release.bash --help
+cut -d' ' -f1 .tool-versions | xargs -i asdf plugin add {}
+asdf install
 ```
 
-And you should an overview of options.
+3. From the root dir of the project you are about to update a changelog to, do
+
+```console
+/path/to/janderscriptsrepo/you/just/cloned/bash/src/changelog_release.bash --help
+```
+
+#### Alternative 2 - Running the Container image (saves you installing asdf and dependencies)
+
+There is a helpscript which will mount ssh agent and more for you.
+
+```console
+/path/to/repo/you/just/cloned/scripts/run_changelog_release_container.sh '--help'
+```
+
+And you should get an overview of options. Note that as you run in an container, arguments will have to be given in one string surrounded by ''
+
 **The script requires that you are following the [conventional commit]https://www.conventionalcommits.org) format, and the commits and tags will be gpg-signed and signed off.**
 
 #### Examples
