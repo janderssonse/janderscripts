@@ -9,15 +9,14 @@
 declare -A EXITCODES
 declare -A SUCCESS_MESSAGES
 
-# Colour
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+readonly RED=$'\e[31m'
+readonly NC=$'\e[0m'
+readonly GREEN=$'\e[32m'
+readonly YELLOW=$'\e[0;33m'
 
 #Terminal chars
-CHECKMARK="\xE2\x9C\x94"
-MISSING="\xE2\x9D\x8C"
+readonly CHECKMARK=$'\xE2\x9C\x94'
+readonly MISSING=$'\xE2\x9D\x8C'
 
 is_command_available() {
   local COMMAND="${1}"
@@ -65,9 +64,20 @@ license() {
 }
 
 commit() {
+  local compareToBranch='main'
+  local currentBranch
+  currentBranch=$(git branch --show-current)
+  # siderolabs/conform:v0.1.0-alpha.27
   print_header 'COMMIT HEALTH (CONFORM)'
-  podman run --rm -i --volume "$(pwd)":/repo -w /repo ghcr.io/siderolabs/conform:v0.1.0-alpha.27 enforce
-  store_exit_code "$?" "Commit" "${MISSING} ${RED}Commit check failed, see logs (std out) and fix problems.${NC}\n" "${GREEN}${CHECKMARK}${CHECKMARK} Commit check passed${NC}\n"
+
+  if [[ "$(git rev-list --count ${compareToBranch}..)" == 0 ]]; then
+    printf "%s" "${GREEN} No commits found in current branch: ${YELLOW}${currentBranch}${NC}, compared to: ${YELLOW}${compareToBranch}${NC} ${NC}"
+    store_exit_code "$?" "Commit" "${MISSING} ${RED}Commit check count failed, see logs (std out) and fix problems.${NC}\n" "${YELLOW}${CHECKMARK}${CHECKMARK} Commit check skipped, no new commits found in current branch: ${YELLOW}${currentBranch}${NC}\n"
+  else
+    podman run --rm -i --volume "$(pwd)":/repo -w /repo ghcr.io/siderolabs/conform:v0.1.0-alpha.27 enforce --base-branch="${compareToBranch}"
+    store_exit_code "$?" "Commit" "${MISSING} ${RED}Commit check failed, see logs (std out) and fix problems.${NC}\n" "${GREEN}${CHECKMARK}${CHECKMARK} Commit check passed${NC}\n"
+  fi
+
   printf '\n\n'
 }
 
