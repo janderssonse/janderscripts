@@ -2,29 +2,25 @@
 
 # Janderscripts
 
-Intended to gather small helpers and scripts, in different languages, over time, mostly for use by myself, but maybe, just maybe, someone else will find something of worth, who knows.
+ Gather small helpers and scripts, in different languages, mostly for personal usage, but who knows, there might be something for you in there.
 
-The script principles are:
+About the scripts:
 
 - They should be glue scripts i.e. not use too much intricate logic, but serve as glueing a few specific commands and utils together.
 - They should come with a fair amount of unit- and integration-tests.
 - They should be structured enough for a non script expert to understand.
-- If growning needs, or beneficial in a more general sense, make no mistake, they should be obsoleted, and rewritten in a more robust language and/or submitted as a PR to any relevant project where the overall function itself would feel at home.
+- If growing, or beneficial in a more general sense, make no mistake - they should be obsoleted, and rewritten in a more robust language. Even better - be submitted as a PR to any relevant project where the overall function itself would feel at home.
 
-## Maintained Scripts Description
+## Currently Maintained Script Descriptions
 
 ### Bash
 
-- bash/src/changelog_release.bash - A util script to making an atomic release commit including an tag, changelog, updated project file. mvn, npm or gradle. Relies on Conventional Commits-standard.
-- bash/src/dirsumgen.bash - A wrapper for the creating md5 and sha256 sums for directory trees. One of each for each dir.
+- `bash/src/changelog_release.bash` - A util script to making an atomic release commit including an tag, changelog, updated project file. mvn, npm or gradle. Relies on Conventional Commits-standard.
+- `bash/src/dirsumgen.bash` - A wrapper for the creating md5 and sha256 sums for directory trees. One of each for each dir.
 
 ## Dependencies
 
 ### Bash
-
-- In general, you should get an error when running the scripts which tell you missing tool(s) for that script.
-- In general, scripts are intended to be run from the root of the project if nothing else is mentioned.
-- The scripts will have a simple help function (-h) or alike.
 
 ### General Usage
 
@@ -47,7 +43,7 @@ This script:
 
 1. Your project is following Conventional Commits Standard.
 2. Your Git Settings is configured to sign and tag with SSH.
-3. You need asdf installed to easily download all dependencies for the script.
+3. You need `asdf-vm` installed to easily download all dependencies for the script.
 
 #### Usage
 
@@ -57,7 +53,7 @@ This script:
 git@github.com:janderssonse/janderscripts.git
 ```
 
-#### Alternative 1 - Running the Changelog_Release script directly
+#### ALTERNATIVE 1 - Running the Changelog_Release script directly
 
 1. Install [asdf-vm](https://asdf-vm.com/guide/getting-started.html)
 
@@ -74,7 +70,7 @@ asdf install
 /path/to/janderscriptsrepo/you/just/cloned/bash/src/changelog_release.bash --help
 ```
 
-#### Alternative 2 - Running the Container image (saves you installing asdf and dependencies)
+#### ALTERNATIVE 2 - Running the Container image (saves you installing asdf-vm and dependencies)
 
 There is a helpscript which will mount ssh agent and more for you.
 
@@ -82,9 +78,11 @@ There is a helpscript which will mount ssh agent and more for you.
 /path/to/repo/you/just/cloned/scripts/run_changelog_release_container.sh '--help'
 ```
 
-And you should get an overview of options. Note that as you run in an container, arguments will have to be given in one string surrounded by ''
+And you should get an overview of options. NOTE: as you run in an container, arguments will have to be given in one string surrounded by ''
 
-**The script requires that you are following the [conventional commit]https://www.conventionalcommits.org) format, and the commits and tags will be gpg-signed and signed off.**
+
+
+**The script requires that you are following the [conventional commit](https://www.conventionalcommits.org) format, and the commits and tags will be gpg-signed and signed off.**
 
 #### Examples
 

@@ -31,6 +31,7 @@ PROJECT_TYPE=''
 PROJECT_FILE=""
 NEXT_TAG=""
 SKIP_ACTION='n'
+SKIP_SSH='n'
 
 # - Fancy colours
 readonly RED=$'\e[31m'
@@ -93,6 +94,10 @@ validate_semver() {
 
 validate_basic_ssh_conf() {
 
+  if [[ "${SKIP_SSH}" == 'y' ]]; then
+    return 0
+  fi
+
   local ssh_agent_has_added_identity
 
   # Has the user an ssh running
@@ -135,7 +140,9 @@ validate_basic_git_conf() {
   fi
 
   if [[ "${git_gpgformat}" != 'ssh' ]]; then
-    err "Your git gpg format is not set to ssh in your configuration. Please check your git config: (git config --get gpg.format)."
+    info "Your git gpg format is not set to ssh in your configuration. Which might be perfectly fine. (git config --get gpg.format)."
+    SKIP_SSH='y'
+    export GPG_TTY=$GPG_TTY
   fi
 
   if [[ "${git_commitsign}" != 'true' ]]; then
@@ -146,7 +153,7 @@ validate_basic_git_conf() {
     err "Your git tag is not set to sign tags. Please check your git config: (git config --get tag.gpgsign)."
   fi
 
-  if [[ -z "${user_signingkey}" ]]; then
+  if [[ "${user_signingkey}" == '' ]]; then
     err "Your ssh git user signingkey is not set in your configuration. Please check your git config: (git config --get user.signingkey). Dont use a path, inline it)."
   fi
 }
@@ -227,8 +234,8 @@ set_project_type_or_guess_from_project_file() {
 }
 
 pre_run_validation() {
-  validate_basic_ssh_conf
   validate_basic_git_conf
+  validate_basic_ssh_conf
   validate_input
 
 }
@@ -294,7 +301,7 @@ calculate_next_version() {
   NEXT_TAG=$(semver bump "${INPUT_SEMVER_SCOPE}" "${latest_tag}")
   readonly NEXT_TAG
 
-  info "$GREEN $CHECKMARK ${NC} Calculated tag version: ${YELLOW}${NEXT_TAG}${NC}"
+  info "$GREEN $CHECKMARK ${NC} Calculated tag version: ${YELLOW}${NEXT_TAG}${NC} based on latest project tag: ${YELLOW}${latest_tag}${NC}"
 }
 
 tag_with_next_version() {
