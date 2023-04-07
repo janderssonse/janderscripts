@@ -82,6 +82,6 @@ dist/
 bash/lib/
 
 #.vscode
-megalinter-reports
+megalinter-reports/
 **/*/.gradle
 .vscode

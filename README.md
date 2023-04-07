@@ -55,13 +55,24 @@ git@github.com:janderssonse/janderscripts.git
 
 #### ALTERNATIVE 1 - Running the Changelog_Release script directly
 
-1. Install [asdf-vm](https://asdf-vm.com/guide/getting-started.html)
+1. Easiest is to install [asdf-vm](https://asdf-vm.com/guide/getting-started.html) 
 
-2. Install the needed dependencies. Here are two commands that adds the plugins and then installs them for you.
+2. Install the needed dependencies. Here are two commands that adds the plugins and then installs them for you. Note it will set them globally, but you can later switch versions easily with asdf, if needed for other projects.
+
 
 ```console
-cut -d' ' -f1 .tool-versions | xargs -i asdf plugin add {}
-asdf install
+# add asdf plugins from .tool-versions
+$ cut -d' ' -f1 .tool-versions | xargs -i asdf plugin add {}
+
+# install all listed .tool-versions plugins versions
+$ asdf install
+
+# pin the asdf versions 
+$ asdf global install git-chglog 0.15.4          
+$ asdf global install java adoptopenjdk-17.0.6+10
+$ asdf global install maven 3.8.7           
+$ asdf global install nodejs 18.4.0          
+$ asdf global install semver 3.4.0           
 ```
 
 3. From the root dir of the project you are about to update a changelog to, do

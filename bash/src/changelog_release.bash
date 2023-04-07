@@ -30,7 +30,7 @@ INPUT_TAG=""
 PROJECT_TYPE=''
 PROJECT_FILE=""
 NEXT_TAG=""
-SKIP_ACTION='n'
+APPLY_ACTION='y'
 SKIP_SSH='n'
 
 # - Fancy colours
@@ -49,8 +49,8 @@ check_interactive() {
     local user_info=$1
 
     while true; do
-      read -r -n 1 -p "${user_info}" SKIP_ACTION
-      case "${SKIP_ACTION}" in
+      read -r -n 1 -p "${user_info}" APPLY_ACTION
+      case "${APPLY_ACTION}" in
       [y]*)
         printf "\n"
         break
@@ -102,15 +102,15 @@ validate_basic_ssh_conf() {
 
   # Has the user an ssh running
   ssh-add -l >/dev/null
-  if [[ "$?" == 2 ]]; then
+  if [[ "$?" -eq 2 ]]; then
     # shellcheck disable=SC2016
-    err 'Tested ssh-add -l, failed - is the ssh-agent running? Hint: eval $(ssh-agent -s)'
+    err "Tested ssh-add -l, failed - is the ssh-agent running? Hint: Run ${YELLOW}'eval \$(ssh-agent -s)'${NC}"
   fi
 
   # Has the user an ssh running, with at least one identiy added?
   ssh_agent_has_added_identity=$(ssh-add -l)
   if [[ "${ssh_agent_has_added_identity=}" == 'The agent has no identities.' ]]; then
-    err 'ssh-agent has no added identities. Hint: ssh-add <your-priv-ssh-key>)'
+    err "ssh-agent has no added identities. Hint: Run ${YELLOW}'ssh-add <your-priv-ssh-key>'${NC}"
   fi
 
 }
@@ -228,7 +228,7 @@ set_project_type_or_guess_from_project_file() {
     fi
     # shellcheck disable=SC2181
     if [[ "$?" -gt 0 ]]; then
-      err 'With Maven as project type, make sure all dependencis are fetched before this script'
+      err 'With Maven as project type, make sure all dependencies are fetched before this script'
     fi
   fi
 }
@@ -306,14 +306,12 @@ calculate_next_version() {
 
 tag_with_next_version() {
 
-  check_interactive "Do you want to skip git tag action? (y/n). Tag definied is ${NEXT_TAG}: "
+  check_interactive "Do you want to apply git tag action? (y/n). Tag definied is ${NEXT_TAG}: "
 
-  if [[ "${SKIP_ACTION}" == 'n' ]]; then
+  if [[ "${APPLY_ACTION}" == 'y' ]]; then
 
-    git tag -s "${NEXT_TAG}" -m "v${NEXT_TAG}"
-
-    if [[ ! "$?" ]]; then
-      err "Something went wrong when running git tag -s ${NEXT_TAG} -m v${NEXT_TAG}, exiting."
+    if ! git tag -s "${NEXT_TAG}" -m "v${NEXT_TAG}"; then
+      err "Something went wrong when running git tag -s ${NEXT_TAG} -m v${NEXT_TAG}, exiting. Verify your gpg or ssh signing Git signing conf"
     fi
 
     info "${GREEN} ${CHECKMARK} ${NC} Tagged (signed): ${YELLOW}${NEXT_TAG}${NC}"
@@ -324,9 +322,9 @@ tag_with_next_version() {
 }
 
 generate_changelog() {
-  check_interactive "Do you want to skip changelog generation? (y/n): "
+  check_interactive "Do you want apply changelog generation? (y/n): "
 
-  if [[ "${SKIP_ACTION}" == 'n' ]]; then
+  if [[ "${APPLY_ACTION}" == 'y' ]]; then
 
     # git-chlglog needs a repourl to generate links
     local repourl
@@ -381,9 +379,9 @@ update_gradle_version() {
 }
 
 update_projectfile_version() {
-  check_interactive "Do you want to skip updating project version? (y/n). Version definied is ${NEXT_TAG}: "
+  check_interactive "Do you want to update the project version? (y/n). Version definied is ${NEXT_TAG}: "
 
-  if [[ "${SKIP_ACTION}" == 'n' ]]; then
+  if [[ "${APPLY_ACTION}" == 'y' ]]; then
 
     if [[ "${PROJECT_TYPE}" == "mvn" ]]; then
       update_pom_version
@@ -400,45 +398,22 @@ update_projectfile_version() {
   fi
 }
 
-commit_changelog_and_projectfile() {
-  check_interactive "Do you want to skip release commit of changelog and projectfile? (y/n): "
-
-  if [[ "${SKIP_ACTION}" == 'n' ]]; then
-
-    local commit_msg="chore: release v${NEXT_TAG}"
-    if [[ -n "${PROJECT_FILE}" ]]; then
-      git add CHANGELOG.md "${PROJECT_FILE}" 1>/dev/null && git commit -q --signoff --gpg-sign -m "${commit_msg}"
-    else
-      git add CHANGELOG.md 1>/dev/null && git commit -q --signoff --gpg-sign -m "${commit_msg}"
-    fi
-    info "${GREEN} ${CHECKMARK} ${NC} Added and committed ${YELLOW}CHANGELOG.md ${PROJECT_FILE}${NC}. Commit message: ${YELLOW}${commit_msg}${NC}"
-  else
-    info "${YELLOW} Skipped git commit of changelog and project file!${NC}"
-  fi
-}
-
 move_tag_to_release_commit() {
-  check_interactive "Do you want to skip moving tag ${NEXT_TAG} to the latest commit? (y/n): "
 
-  if [[ "${SKIP_ACTION}" == 'n' ]]; then
+  local latest_commit
+  latest_commit=$(git rev-parse HEAD)
 
-    local latest_commit
-    latest_commit=$(git rev-parse HEAD)
-
-    git tag -f "${NEXT_TAG}" "${latest_commit}" -m "v${NEXT_TAG}" 1>/dev/null
-    info "${GREEN} ${CHECKMARK} ${NC} Moved tag ${YELLOW}${NEXT_TAG}${NC} to latest commit ${YELLOW}${latest_commit}${NC}"
-  else
-    info "${YELLOW} Skipped git commit of changelog and projectfile step!${NC}"
-  fi
+  git tag -f "${NEXT_TAG}" "${latest_commit}" -m "v${NEXT_TAG}" 1>/dev/null
+  info "${GREEN} ${CHECKMARK} ${NC} Moved tag ${YELLOW}${NEXT_TAG}${NC} to latest commit ${YELLOW}${latest_commit}${NC}"
 }
 
 push_release_commit() {
 
-  check_interactive "Do you want to skip Git push of your latest commit (and tag)? (y/n). Would push to origin, branch: ${INPUT_GIT_BRANCH_NAME}: "
+  check_interactive "Do you want to Git push your latest commit (and tag)? (y/n). Would push to origin, branch: ${INPUT_GIT_BRANCH_NAME}: "
 
   if [[ "${INPUT_GIT_BRANCH_NAME}" == "none" ]]; then
     info "${YELLOW}No Git branch was given (option -b | --git-branch-name). Skipping final Git push. ${NC}"
-  elif [[ "${SKIP_ACTION}" == 'n' ]]; then
+  elif [[ "${APPLY_ACTION}" == 'y' ]]; then
     if [[ -z "${INPUT_GIT_BRANCH_NAME}" ]]; then
       info "${YELLOW}INPUT_GIT_BRANCH_NAME was empty, skipping git push. Set branch with -b/--git-branch-name${NC}"
       return 0
@@ -455,6 +430,24 @@ push_release_commit() {
   fi
 }
 
+commit_changelog_and_projectfile() {
+  check_interactive "Do you want to apply the release commit of changelog and projectfile? (y/n): "
+
+  if [[ "${APPLY_ACTION}" == 'y' ]]; then
+
+    local commit_msg="chore: release v${NEXT_TAG}"
+    if [[ -n "${PROJECT_FILE}" ]]; then
+      git add CHANGELOG.md "${PROJECT_FILE}" 1>/dev/null && git commit -q --signoff --gpg-sign -m "${commit_msg}"
+    else
+      git add CHANGELOG.md 1>/dev/null && git commit -q --signoff --gpg-sign -m "${commit_msg}"
+    fi
+    info "${GREEN} ${CHECKMARK} ${NC} Added and committed ${YELLOW}CHANGELOG.md ${PROJECT_FILE}${NC}. Commit message: ${YELLOW}${commit_msg}${NC}"
+    move_tag_to_release_commit
+    push_release_commit
+  else
+    info "${YELLOW} Skipped git commit of changelog and project file!${NC}"
+  fi
+}
 run_() {
 
   pre_run_validation
@@ -464,8 +457,6 @@ run_() {
   generate_changelog
   update_projectfile_version
   commit_changelog_and_projectfile
-  move_tag_to_release_commit
-  push_release_commit
 
 }
 

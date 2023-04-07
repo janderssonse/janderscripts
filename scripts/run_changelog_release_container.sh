@@ -28,4 +28,4 @@ docker run --env ARGS="${ARGS}" --volume "${GITCONFIG}":/etc/gitconfig:ro \
   -v "$SSH_AUTH_SOCK:$SSH_AUTH_SOCK" \
   -e SSH_AUTH_SOCK="${SSH_AUTH_SOCK}" \
   -e LOCAL_MVN_REPO='/app/.m2/repository' \
-  --rm -it changelog_release
+  --rm -it ghcr.io/janderssonse/changelog_release:latest

@@ -7,25 +7,22 @@ env:
   IMAGE_NAME: changelog_release
 
 jobs:
-  
   build-and-push-image:
     runs-on: ubuntu-latest
     permissions:
-        contents: read
-        packages: write
+      contents: read
+      packages: write
 
     steps:
-      
       - name: Checkout repo
         uses: actions/checkout@v3
-      
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
-      
+
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v1
-        
 
       - name: Inspect builder
         run: |
@@ -37,7 +34,7 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Extract metadata (tags, labels) for distribution image
         id: metadist
         uses: docker/metadata-action@v3
@@ -50,7 +47,7 @@ jobs:
             type=semver,pattern={{version}},priority=2
             type=raw,value=${{ env.IMAGE_NAME }}-{{branch}}-{{date 'YYYYMMDD'}}-{{sha}},priority=31,enable=${{ !startsWith(github.ref, 'refs/tags/v') }}
             type=raw,value=${{ env.IMAGE_NAME }}-{{tag}}-{{date 'YYYYMMDD'}}-{{sha}},priority=32, enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-      
+
       - name: Build and push distribution image
         uses: docker/build-push-action@v2
         with:
@@ -60,4 +57,3 @@ jobs:
           push: true
           tags: ${{ steps.metadist.outputs.tags }}
           labels: ${{ steps.metadist.outputs.labels }}
-      

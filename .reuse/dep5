@@ -1,4 +1,5 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Source: https://www.github.com/janderssonse/janderscripts
 
 Files: .gitignore .gitattributes .github/workflows/*.yml docs/img/*.png .conform.yaml .editorconfig **/*.mustache configs/mega-linter.yml *.md *.adoc CONTRIBUTING.adoc bash/src/test/resources/**/*
 Copyright: 2022 Josef Andersson
