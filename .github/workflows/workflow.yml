@@ -19,7 +19,7 @@ jobs:
   lint:
     uses: ./.github/workflows/lint.yml
   test:
-    needs: [dco, license, lint]
+    needs: [license, lint]
     uses: ./.github/workflows/test.yml
   build:
     needs: [test]
