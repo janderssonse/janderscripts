@@ -6,26 +6,14 @@ jobs:
   signoff:
     runs-on: ubuntu-latest
 
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
-        if: github.event_name == 'pull_request'
-      
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-        if: github.event_name != 'pull_request'
 
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
-        if: github.event_name == 'pull_request'
-        
       - name: Setup main branch without switching current branch
-        if: github.event_name == 'pull_request'
         run: git fetch origin main:main
 
       - name: Conform Action
