@@ -25,6 +25,7 @@ jobs:
         if: github.event_name == 'pull_request'
         
       - name: Setup main branch without switching current branch
+        if: github.event_name == 'pull_request'
         run: git fetch origin main:main
 
       - name: Conform Action
