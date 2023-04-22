@@ -2,7 +2,7 @@
 
 # Janderscripts
 
- Gather small helpers and scripts, in different languages, mostly for personal usage, but who knows, there might be something for you in there.
+Gather small helpers and scripts, in different languages, mostly for personal usage, but who knows, there might be something for you in there.
 
 About the scripts:
 
@@ -17,6 +17,7 @@ About the scripts:
 
 - `bash/src/changelog_release.bash` - A util script to making an atomic release commit including an tag, changelog, updated project file. mvn, npm or gradle. Relies on Conventional Commits-standard.
 - `bash/src/dirsumgen.bash` - A wrapper for the creating md5 and sha256 sums for directory trees. One of each for each dir.
+- `bash/src/export_gpg.sh` - A script which exports your GPG private-, public keys and owner trust data (to a directory with locked down permissions).
 
 ## Dependencies
 
@@ -55,10 +56,9 @@ git@github.com:janderssonse/janderscripts.git
 
 #### ALTERNATIVE 1 - Running the Changelog_Release script directly
 
-1. Easiest is to install [asdf-vm](https://asdf-vm.com/guide/getting-started.html) 
+1. Easiest is to install [asdf-vm](https://asdf-vm.com/guide/getting-started.html)
 
 2. Install the needed dependencies. Here are two commands that adds the plugins and then installs them for you. Note it will set them globally, but you can later switch versions easily with asdf, if needed for other projects.
-
 
 ```console
 # add asdf plugins from .tool-versions
@@ -67,12 +67,12 @@ $ cut -d' ' -f1 .tool-versions | xargs -i asdf plugin add {}
 # install all listed .tool-versions plugins versions
 $ asdf install
 
-# pin the asdf versions 
-$ asdf global install git-chglog 0.15.4          
+# pin the asdf versions
+$ asdf global install git-chglog 0.15.4
 $ asdf global install java adoptopenjdk-17.0.6+10
-$ asdf global install maven 3.8.7           
-$ asdf global install nodejs 18.4.0          
-$ asdf global install semver 3.4.0           
+$ asdf global install maven 3.8.7
+$ asdf global install nodejs 18.4.0
+$ asdf global install semver 3.4.0
 ```
 
 3. From the root dir of the project you are about to update a changelog to, do
@@ -90,8 +90,6 @@ There is a helpscript which will mount ssh agent and more for you.
 ```
 
 And you should get an overview of options. NOTE: as you run in an container, arguments will have to be given in one string surrounded by ''
-
-
 
 **The script requires that you are following the [conventional commit](https://www.conventionalcommits.org) format, and the commits and tags will be gpg-signed and signed off.**
 
@@ -116,6 +114,22 @@ And you should get an overview of options. NOTE: as you run in an container, arg
 <img src="./docs/img/changelog_release_commit_example.png " alt="changelog_release cli" width="800"/>  
 <figcaption><em>changelog_release commit example - project file, changelog, tag and release commit message</em></figcaption>
 </figure>
+
+### SCRIPT: export_gpg
+
+A script which exports your private keys, public keys and owner trust data (to a directory with locked down permissions).
+
+I use it with [YADM](https://yadm.io/) handle encryption/decryption of the export, and easily move between environments.
+
+YADM-usage:
+Put a pattern of `.gnupg/.exported-keyring/*` into `.config/yadm/config` and use YADM encrypt/decrypt.
+
+### Importing the keys to a new location
+
+```console
+$ gpg --import "$HOME/.gnupg/.exported-keyring"/*.asc
+$ gpg --import-ownertrust "$HOME/.gnupg/.exported-keyring"/ownertrust.txt
+```
 
 ## Development
 
