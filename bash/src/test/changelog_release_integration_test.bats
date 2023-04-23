@@ -171,7 +171,7 @@ function assert_scriptrun_output() {
   # all setup, now run it
   cd "${TEST_TEMP_DIR}/${project_name}" || exit 1
   git remote add origin ../integtest.git
-  run ./changelog_release.bash --git-branch-name "${branch_name}"
+  run ./changelog_release.bash --semver-scope 'minor' --git-branch-name "${branch_name}"
 
   assert_output --partial "Calculating next tag from semver scope: ${YELLOW}minor${NC}"
   assert_output --partial "Calculated tag version: ${YELLOW}1.1.0${NC}"

@@ -22,7 +22,7 @@ set -o errtrace
 INPUT_GIT_BRANCH_NAME="none"
 INPUT_IS_INTERACTIVE=""
 INPUT_PROJECT_TYPE=""
-INPUT_SEMVER_SCOPE="minor"
+INPUT_SEMVER_SCOPE="patch"
 INPUT_REPOURL=''
 INPUT_TAG=""
 
@@ -257,7 +257,7 @@ usage() {
     "" \
     " -h --help            Print this help and exit" \
     " -d --debug           Output extra script run information" \
-    " -s --semver-scope    Semver scope for next tag when autoidentify <major|minor|patch>. Default: minor" \
+    " -s --semver-scope    Semver scope for next tag when autoidentify <major|minor|patch>. Default: patch" \
     " -t --next-tag        Specify next tag instead of autoidentify" \
     " -p --project-type    Which project type <npm|mvn|gradle|none>. Default: try autoidentify by existing file." \
     " -b --git-branch-name Git branch name to push to (any_name). 'none' skips push. Default: none. " \

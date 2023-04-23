@@ -117,7 +117,7 @@ function calculate_next_version_gets_latest_tag_if_no_tags_given() { #@test
   }
 
   calculate_next_version
-  assert_equal "$NEXT_TAG" "in_semver bump minor git_tag"
+  assert_equal "$NEXT_TAG" "in_semver bump patch git_tag"
 
 }
 
@@ -134,7 +134,7 @@ function calculate_next_version_sets_default_test_if_no_tags_found() { #@test
     echo "in_semver $@"
   }
   calculate_next_version
-  assert_equal "$NEXT_TAG" "in_semver bump minor 0.0.0"
+  assert_equal "$NEXT_TAG" "in_semver bump patch 0.0.0"
 
 }
 
