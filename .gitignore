@@ -79,9 +79,9 @@ src/vendor/
 dist/
 
 # Bash
-bash/lib/
+**/bash/lib/**
 
 #.vscode
-megalinter-reports/
+**/megalinter-reports/**
 **/*/.gradle
 .vscode

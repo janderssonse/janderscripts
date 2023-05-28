@@ -156,7 +156,7 @@ function clone_and_verify_result() {
   if [[ -n "${PROJECT_FILE}" ]]; then
     assert_equal '1.1.0' "${project_version}"
   fi
-  assert_equal "${changed_files}" "${expected_changed_files}" 
+  assert_equal "${changed_files}" "${expected_changed_files}"
 
   assert_equal 'chore: release v1.1.0' "${commit_message}"
   git_tag_delete
