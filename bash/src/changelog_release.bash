@@ -29,6 +29,7 @@ INPUT_TAG=""
 # ---
 PROJECT_TYPE=''
 PROJECT_FILE=""
+PROJECT_ROOT_FOLDER='./'
 NEXT_TAG=""
 APPLY_ACTION='y'
 SKIP_SSH='n'
@@ -351,7 +352,7 @@ generate_changelog() {
 
     #info "Generate changelog ........ ${repourl}"
     git-chglog --repository-url "${repourl}" -c "${git_chglog_conf}" -o CHANGELOG.md
-    info "${GREEN} ${CHECKMARK} ${NC} Generated changelog as ${YELLOW}./CHANGELOG.md${NC}"
+    info "${GREEN} ${CHECKMARK} ${NC} Generated changelog as ${YELLOW}${PROJECT_ROOT_FOLDER}CHANGELOG.md${NC}"
   else
     info "${YELLOW} Skipped Changelog generation!${NC}"
   fi
@@ -430,18 +431,49 @@ push_release_commit() {
   fi
 }
 
+package_lock_exists() {
+
+  if [[ -f "${PROJECT_ROOT_FOLDER}package-lock.json" ]]; then
+    echo "exists"
+  else
+    echo ''
+  fi
+}
+
+git_add() {
+  local addfile=$1
+  git add "${addfile}" 1>/dev/null
+}
+
 commit_changelog_and_projectfile() {
   check_interactive "Do you want to apply the release commit of changelog and projectfile? (y/n): "
 
   if [[ "${APPLY_ACTION}" == 'y' ]]; then
-
     local commit_msg="chore: release v${NEXT_TAG}"
+    git_add CHANGELOG.md
+
     if [[ -n "${PROJECT_FILE}" ]]; then
-      git add CHANGELOG.md "${PROJECT_FILE}" 1>/dev/null && git commit -q --signoff --gpg-sign -m "${commit_msg}"
-    else
-      git add CHANGELOG.md 1>/dev/null && git commit -q --signoff --gpg-sign -m "${commit_msg}"
+
+      git_add "${PROJECT_FILE}"
+
+      if [[ "${PROJECT_TYPE}" == 'npm' ]]; then
+        local have_package_lock
+        have_package_lock=$(package_lock_exists)
+
+        if [[ -n "${have_package_lock}" ]]; then
+          git_add "${PROJECT_ROOT_FOLDER}package-lock.json"
+        fi
+      fi
     fi
-    info "${GREEN} ${CHECKMARK} ${NC} Added and committed ${YELLOW}CHANGELOG.md ${PROJECT_FILE}${NC}. Commit message: ${YELLOW}${commit_msg}${NC}"
+
+    git commit -q --signoff --gpg-sign -m "${commit_msg}"
+
+    if [[ -n ${PROJECT_FILE} ]]; then
+      info "${GREEN} ${CHECKMARK} ${NC} Added and committed ${YELLOW}CHANGELOG.md ${PROJECT_FILE}${NC}. Commit message: ${YELLOW}${commit_msg}${NC}"
+    else
+      info "${GREEN} ${CHECKMARK} ${NC} Added and committed ${YELLOW}CHANGELOG.md${NC}. Commit message: ${YELLOW}${commit_msg}${NC}"
+    fi
+
     move_tag_to_release_commit
     push_release_commit
   else
@@ -451,7 +483,7 @@ commit_changelog_and_projectfile() {
 run_() {
 
   pre_run_validation
-  set_project_type_or_guess_from_project_file './'
+  set_project_type_or_guess_from_project_file "${PROJECT_ROOT_FOLDER}"
   calculate_next_version
   tag_with_next_version
   generate_changelog

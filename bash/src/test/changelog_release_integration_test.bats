@@ -138,8 +138,9 @@ function clone_and_verify_result() {
 
   tag_version=$(git tag | tr -d v | sort -V | tail -1)
   commithash_tag_points_to=$(git rev-list -n 1 1.1.0)
-  changed_files=$(git diff-tree --no-commit-id --name-only -r "${commithash_tag_points_to}" | sort | tr -d '\n')
+  changed_files=$(git diff-tree --no-commit-id --name-only -r "${commithash_tag_points_to}" | sort)
   commit_message=$(git show -s --format=%B "${commithash_tag_points_to}" | head -1)
+  expected_changed_files=$(echo "$expected_changed_files" | sort)
 
   assert_equal '1.1.0' "${tag_version}"
 
@@ -155,11 +156,16 @@ function clone_and_verify_result() {
   if [[ -n "${PROJECT_FILE}" ]]; then
     assert_equal '1.1.0' "${project_version}"
   fi
-  assert_equal "${expected_changed_files}" "${changed_files}"
+  assert_equal "${changed_files}" "${expected_changed_files}" 
 
   assert_equal 'chore: release v1.1.0' "${commit_message}"
   git_tag_delete
 
+}
+
+assert_git_add_output() {
+  local projectfiles=$1
+  assert_output --partial "Added and committed ${YELLOW}${projectfiles}${NC}. Commit message: ${YELLOW}chore: release v1.1.0${NC}"
 }
 
 function assert_scriptrun_output() {
@@ -167,6 +173,7 @@ function assert_scriptrun_output() {
   local -r project_name=$1
   local -r branch_name=$2
   local -r project_file_name=$3
+  local -r project_file_name_1=$3
 
   # all setup, now run it
   cd "${TEST_TEMP_DIR}/${project_name}" || exit 1
@@ -181,10 +188,14 @@ function assert_scriptrun_output() {
 
   if [[ -n "${project_file_name}" ]]; then
     assert_output --partial "Updated ${project_file_name} version to ${YELLOW}1.1.0${NC}"
-    assert_output --partial "Added and committed ${YELLOW}CHANGELOG.md ./${project_file_name}${NC}. Commit message: ${YELLOW}chore: release v1.1.0${NC}"
-  else
-    assert_output --partial "Added and committed ${YELLOW}CHANGELOG.md ${NC}. Commit message: ${YELLOW}chore: release v1.1.0${NC}"
 
+    if [[ -n $project_file_name1 ]]; then
+      assert_git_add_output "CHANGELOG.md ./${project_file_name} ./${project_file_name1}"
+    else
+      assert_git_add_output "CHANGELOG.md ./${project_file_name}"
+    fi
+  else
+    assert_git_add_output "CHANGELOG.md"
   fi
 
   assert_output --partial "Moved tag ${YELLOW}1.1.0${NC} to latest commit"
@@ -202,7 +213,7 @@ function mvn_project_is_tagged_and_updated_correctly() { #@test
 
   setup_git_test_branch "${project_name}" "${branch_name}" "${tag_name}"
   assert_scriptrun_output "${project_name}" "${branch_name}" 'pom.xml'
-  clone_and_verify_result 'mvn' "${project_name}" 'CHANGELOG.mdpom.xml' "${branch_name}"
+  clone_and_verify_result 'mvn' "${project_name}" $'CHANGELOG.md\npom.xml' "${branch_name}"
 
 }
 
@@ -213,8 +224,8 @@ function npmproject_is_tagged_and_updated_correctly() { #@test
   local -r tag_name='1.0.1'
 
   setup_git_test_branch "${project_name}" "${branch_name}" "${tag_name}"
-  assert_scriptrun_output "${project_name}" "${branch_name}" 'package.json'
-  clone_and_verify_result 'npm' "${project_name}" 'CHANGELOG.mdpackage.json' "${branch_name}"
+  assert_scriptrun_output "${project_name}" "${branch_name}" 'package.json' 'package-lock.json'
+  clone_and_verify_result 'npm' "${project_name}" $'CHANGELOG.md\npackage.json\npackage-lock.json' "${branch_name}"
 
 }
 
@@ -225,7 +236,7 @@ function gradle_project_is_tagged_and_updated_correctly() { #@test
 
   setup_git_test_branch "${project_name}" "${branch_name}" "${tag_name}"
   assert_scriptrun_output "${project_name}" "${branch_name}" 'gradle.properties'
-  clone_and_verify_result 'gradle' "${project_name}" 'CHANGELOG.mdgradle.properties' "${branch_name}"
+  clone_and_verify_result 'gradle' "${project_name}" $'CHANGELOG.md\ngradle.properties' "${branch_name}"
 }
 
 function project_with_no_supported_projectfile_is_tagged_and_updated_correctly() { #@test
