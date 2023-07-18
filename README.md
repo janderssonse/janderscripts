@@ -15,9 +15,10 @@ About the scripts:
 
 ### Bash
 
-- `bash/src/changelog_release.bash` - A util script to making an atomic release commit including an tag, changelog, updated project file. mvn, npm or gradle. Relies on Conventional Commits-standard.
 - `bash/src/dirsumgen.bash` - A wrapper for the creating md5 and sha256 sums for directory trees. One of each for each dir.
 - `bash/src/export_gpg.sh` - A script which exports your GPG private-, public keys and owner trust data (to a directory with locked down permissions).
+
+_Note: The Changelog-tag script has moved to https://github.com/janderssonse/changelog-tag_
 
 ## Dependencies
 
@@ -29,23 +30,6 @@ About the scripts:
 ./bash/src/<script>.bash -h
 ```
 
-### SCRIPT: changelog_release usage
-
-To make a nice release commit might need a few boring steps - adding a changelog, tagging, update project verison. Add Conventional commits, signing and signoffs. It is easy to forget and miss something. So why not make it easier, a one step process:
-
-This script:
-
-1. calculate and tags next semver tag
-2. generates a changelog
-3. updates the project file version with the version tag
-4. commits the changelog and tag in a release commit
-
-#### Requirements
-
-1. Your project is following Conventional Commits Standard.
-2. Your Git Settings is configured to sign and tag with SSH.
-3. You need `asdf-vm` installed to easily download all dependencies for the script.
-
 #### Usage
 
 - Clone this repo
@@ -53,67 +37,6 @@ This script:
 ```console
 git@github.com:janderssonse/janderscripts.git
 ```
-
-#### ALTERNATIVE 1 - Running the Changelog_Release script directly
-
-1. Easiest is to install [asdf-vm](https://asdf-vm.com/guide/getting-started.html)
-
-2. Install the needed dependencies. Here are two commands that adds the plugins and then installs them for you. Note it will set them globally, but you can later switch versions easily with asdf, if needed for other projects.
-
-```console
-# add asdf plugins from .tool-versions
-$ cut -d' ' -f1 .tool-versions | xargs -i asdf plugin add {}
-
-# install all listed .tool-versions plugins versions
-$ asdf install
-
-# pin the asdf versions
-$ asdf global install git-chglog 0.15.4
-$ asdf global install java adoptopenjdk-17.0.6+10
-$ asdf global install maven 3.8.7
-$ asdf global install nodejs 18.4.0
-$ asdf global install semver 3.4.0
-```
-
-3. From the root dir of the project you are about to update a changelog to, do
-
-```console
-/path/to/janderscriptsrepo/you/just/cloned/bash/src/changelog_release.bash --help
-```
-
-#### ALTERNATIVE 2 - Running the Container image (saves you installing asdf-vm and dependencies)
-
-There is a helpscript which will mount ssh agent and more for you.
-
-```console
-/path/to/repo/you/just/cloned/scripts/run_changelog_release_container.sh '--help'
-```
-
-And you should get an overview of options. NOTE: as you run in an container, arguments will have to be given in one string surrounded by ''
-
-**The script requires that you are following the [conventional commit](https://www.conventionalcommits.org) format, and the commits and tags will be gpg-signed and signed off.**
-
-#### Examples
-
-<figure>
-<img src="./docs/img/changelog_release_cli.png " alt="changelog_release cli" width="800"/>  
-<figcaption><em>changelog_release with --help option</em></figcaption>
-</figure>
-
-<figure>
-<img src="./docs/img/changelog_release_run.png " alt="changelog_release cli" width="800"/>  
-<figcaption ><em>changelog_release run</em></figcaption>
-</figure>
-
-<figure>
-<img src="./docs/img/changelog_release_log.png " alt="changelog_release cli" width="800"/>  
-<figcaption><em>changelog_release generated changelog example</em></figcaption>
-</figure>
-
-<figure>
-<img src="./docs/img/changelog_release_commit_example.png " alt="changelog_release cli" width="800"/>  
-<figcaption><em>changelog_release commit example - project file, changelog, tag and release commit message</em></figcaption>
-</figure>
 
 ### SCRIPT: export_gpg
 
