@@ -17,8 +17,10 @@ About the scripts:
 
 - `bash/src/dirsumgen.bash` - A wrapper for the creating md5 and sha256 sums for directory trees. One of each for each dir.
 - `bash/src/export_gpg.sh` - A script which exports your GPG private-, public keys and owner trust data (to a directory with locked down permissions).
+- `bash/src/git_test_create_tbc.sh` - A script which creates git test data in a repository: branches, tags, commits.
+- `bash/src/git_delete_branch_local_with_no_remote.sh` - A script which deletes all local branches having no tracking branch upstreams. 
+- `bash/src/github_cleanup_helper.sh` - A script which allows you to clean workflow runs, caches or deployments on GitHub.
 
-_Note: The Changelog-tag script has moved to https://github.com/janderssonse/changelog-tag_
 
 ## Dependencies
 

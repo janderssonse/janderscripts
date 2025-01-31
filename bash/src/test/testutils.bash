@@ -27,9 +27,7 @@ function _is_command_installed() {
   if ! [[ -x "$(command -v "${prog}")" ]]; then
     info "Tool ${RED}${prog} could not be found${NC}, make sure it is installed!" \
       "**Highly** recommended to use the asdf-vm version if there is a plugin for the tool." \
-      "**Highly** recommended that you speed up the changelog generation by pre-installing global dependency 'git-changelog-command-line'." \
-      "Otherwise npx will builddeps etc for every script run, minutes instead of seconds.)"
-    info "See ${GREEN}${link}${NC} or your package manager for install options."
+      info "See ${GREEN}${link}${NC} or your package manager for install options."
     exit 1
   fi
 }

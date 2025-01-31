@@ -21,7 +21,3 @@ jobs:
   test:
     needs: [license, lint]
     uses: ./.github/workflows/test.yml
-  build:
-    needs: [test]
-    if: github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/publish-image.yml
